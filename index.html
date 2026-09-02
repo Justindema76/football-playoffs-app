@@ -17,11 +17,9 @@
           <h1>Fantasy Football 2026</h1>
           <div class="sub">Yahoo ranking order + live fantasy intelligence</div>
         </div>
-
         <label class="search-wrap" aria-label="Search">
           <input id="search" class="search" type="search" placeholder="Search player, team, action..." autocomplete="off">
         </label>
-
         <div class="header-actions">
           <button id="keyButton" class="key-button" type="button" aria-label="Set app key">KEY</button>
           <div id="syncPill" class="status-pill" data-state="loading">
@@ -30,7 +28,6 @@
           </div>
         </div>
       </div>
-
       <div class="stats" aria-label="Fantasy summary">
         <div class="stat"><b id="intelCount">—</b><span>INTEL</span></div>
         <div class="stat"><b id="highCount">—</b><span>HIGH+</span></div>
@@ -38,7 +35,6 @@
         <div class="stat"><b id="targetCount">—</b><span>PLAN PLAYERS</span></div>
       </div>
     </header>
-
     <section class="viewbar">
       <div>
         <h2 id="viewTitle">DRAFT</h2>
@@ -53,12 +49,10 @@
       </div>
       <div id="viewMeta" class="view-meta"></div>
     </section>
-
     <div id="filters" class="filters" aria-label="Position filters"></div>
     <div id="notice" class="notice" hidden></div>
     <main id="content" class="content" aria-live="polite"></main>
   </div>
-
   <nav class="bottom-nav" aria-label="Fantasy views">
     <div class="nav-inner">
       <button type="button" data-view="intel">INTEL</button>
@@ -70,7 +64,6 @@
       <button type="button" data-view="draft" class="active">DRAFT</button>
     </div>
   </nav>
-
   <div id="keyModal" class="modal" hidden>
     <div class="modal-backdrop" data-close-modal></div>
     <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="keyTitle">
@@ -83,7 +76,23 @@
       </div>
     </section>
   </div>
-
+  <div id="playerModal" class="modal" hidden>
+    <div class="modal-backdrop" data-close-player-modal></div>
+    <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="playerTitle">
+      <h3 id="playerTitle">Add missing Yahoo player</h3>
+      <p>Use this only if the player is missing from the synced Yahoo Player List.</p>
+      <div class="form-grid">
+        <label><span>Name</span><input id="manualName" autocomplete="off" placeholder="Yahoo player name"></label>
+        <label><span>Team</span><input id="manualTeam" autocomplete="off" maxlength="4" placeholder="BUF"></label>
+        <label><span>Position</span><select id="manualPosition"><option>QB</option><option>RB</option><option>WR</option><option>TE</option><option>K</option><option>DEF</option></select></label>
+        <label><span>Yahoo rank</span><input id="manualRank" type="number" min="1" inputmode="numeric" placeholder="31"></label>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="button secondary" data-close-player-modal>Cancel</button>
+        <button type="button" class="button primary" id="savePlayerButton">Add + Star</button>
+      </div>
+    </section>
+  </div>
   <script src="./app.js" defer></script>
 </body>
 </html>
