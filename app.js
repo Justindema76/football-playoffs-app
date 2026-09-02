@@ -57,9 +57,20 @@
   }
 
   function isInjuryPlayer(p){
-    const injury=/injur|questionable|doubtful|limited|practice|pup|\bir\b|hamstring|knee|ankle|heel|concussion|shoulder|groin|foot|calf|quad|back/i;
+    // Trust the explicit INJURY draft_tag the backend already sets on a
+    // player's own intel items, instead of keyword-scanning the freeform
+    // write-up. The old regex included a bare "back" (unbounded), which
+    // matched inside ordinary fantasy vocabulary like "backfield" -- so any
+    // fully healthy RB whose note mentioned a teammate's backfield role (or
+    // an "IR" reference about that teammate, not the player) got flagged as
+    // hurt. Concretely: Jahmyr Gibbs -- the #1 overall ranked, fully
+    // healthy player -- was showing up on the Injuries tab and getting a red
+    // INJURY badge on Intel solely because his UPGRADE note said Detroit put
+    // backup Isiah Pacheco on IR, thinning the "backfield" behind him. The
+    // backend already tags real injury items with draft_tags: ["INJURY"]
+    // (see intel_items), so use that instead of re-deriving it from prose.
     const intel=p.intel_items||[];
-    return tags(p).some(t=>/INJUR/.test(t))||intel.some(i=>injury.test(`${i.action||''} ${i.status||''} ${i.what_changed||''} ${i.recommendation||''} ${(i.draft_tags||[]).join(' ')}`));
+    return tags(p).some(t=>t==='INJURY')||intel.some(i=>(i.draft_tags||[]).some(t=>String(t).toUpperCase()==='INJURY'));
   }
 
   function matches(p){
