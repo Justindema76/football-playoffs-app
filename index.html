@@ -1,15 +1,15 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="light">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#07111f">
+  <meta name="theme-color" content="#f5f7fb">
   <title>Fantasy Football 2026</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <div class="shell" id="shell" data-view="draft">
-    <header class="app-header"><div class="header-main"><div class="brand-wrap"><h1>2026 Fantasy Intel</h1><p>Yahoo Player List + your draft intelligence</p></div><input id="search" class="search" type="search" placeholder="Search player, team, position..." autocomplete="off"><div class="header-actions"><button id="themeButton" class="theme-btn" type="button" aria-label="Toggle light and dark mode" onclick="document.documentElement.classList.toggle('light');this.textContent=document.documentElement.classList.contains('light')?'🌙':'☀️'">☀️</button><button id="keyButton" class="ghost-btn" type="button">KEY</button><span id="syncPill" class="sync-pill" data-state="loading"><i></i><b id="syncText">SYNCING</b></span></div></div><div class="summary-grid"><div><b id="yahooCount">—</b><span>YAHOO PLAYERS</span></div><div><b id="targetCount">—</b><span>ABSOLUTES</span></div><div><b id="intelCount">—</b><span>INTEL</span></div><div><b id="flagCount">—</b><span>FLAGGED</span></div></div></header>
+    <header class="app-header"><div class="header-main"><div class="brand-wrap"><h1>2026 Fantasy Intel</h1><p>Yahoo Player List + your draft intelligence</p></div><input id="search" class="search" type="search" placeholder="Search player, team, position..." autocomplete="off"><div class="header-actions"><button id="themeButton" class="theme-btn" type="button" aria-label="Toggle light and dark mode" onclick="document.documentElement.classList.toggle('light');this.textContent=document.documentElement.classList.contains('light')?'🌙':'☀️'">🌙</button><button id="keyButton" class="ghost-btn" type="button">KEY</button><span id="syncPill" class="sync-pill" data-state="loading"><i></i><b id="syncText">SYNCING</b></span></div></div><div class="summary-grid"><div><b id="yahooCount">—</b><span>YAHOO PLAYERS</span></div><div><b id="targetCount">—</b><span>ABSOLUTES</span></div><div><b id="intelCount">—</b><span>INTEL</span></div><div><b id="flagCount">—</b><span>FLAGGED</span></div></div></header>
     <section class="page-head"><div><h2 id="pageTitle">DRAFT</h2><div id="positionFilters" class="filter-row"></div></div><div id="pageMeta" class="page-meta"></div></section><div id="notice" class="notice" hidden></div><main id="content"></main>
   </div>
   <nav class="bottom-nav"><button data-view="intel">INTEL</button><button data-view="players">PLAYERS</button><button data-view="cowbell">COWBELL</button><button data-view="injuries">INJURIES</button><button data-view="weather">WEATHER</button><button data-view="draft" class="active">DRAFT</button></nav>
