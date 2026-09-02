@@ -193,24 +193,42 @@
     catch(e){localStorage.removeItem(APP_KEY);alert('Target update failed. Re-enter the app key.');openKey()}
   }
 
+  function firstCatalogGap(all){
+    const ranks=new Set(all.map(p=>Number(p.yahoo_rank)).filter(Number.isInteger));
+    const maxRank=Math.max(0,...ranks);
+    if(maxRank<1)return 1;
+    for(let r=1;r<=maxRank;r++)if(!ranks.has(r))return r;
+    return null;
+  }
+
   function renderDraft(){
     const all=state.players.slice().sort(sortYahoo);
     const shown=all.filter(matches);
     const targeted=all.filter(p=>p.user_target).length;
-    $('pageMeta').textContent=`${shown.length} Yahoo players shown · ${targeted} targeted · ${TIER_COUNT} tiers`;
+    const gap=firstCatalogGap(all);
+    $('pageMeta').textContent=`${shown.length} Yahoo players shown · ${targeted} targeted · Tier 1 is Yahoo #1-12`;
     if(!all.length){$('content').innerHTML='<div class="empty">No Yahoo players synced yet.</div>';return}
-    const size=Math.max(1,Math.ceil(all.length/TIER_COUNT));
-    const grouped=Array.from({length:TIER_COUNT},()=>[]);
-    all.forEach((p,i)=>grouped[Math.min(TIER_COUNT-1,Math.floor(i/size))].push(p));
-    const allowed=new Set(shown.map(x=>x.player_key));
-    const displayGroups=grouped.map(g=>g.filter(p=>allowed.has(p.player_key)));
-    $('content').innerHTML=`<div class="draft-summary"><div><span>YAHOO PLAYERS</span><b>${all.length}</b></div><div><span>TARGETED</span><b>${targeted}</b></div><div><span>TIERS</span><b>${TIER_COUNT}</b></div><div><span>ORDER</span><b>YAHOO</b></div></div><div class="tier-grid">${displayGroups.map((g,i)=>tier(i+1,g)).join('')}</div>`;
+    if(gap){
+      $('content').innerHTML=`<div class="catalog-error"><b>YAHOO CATALOG INCOMPLETE</b><span>Yahoo rank #${gap} is missing. The Draft board is intentionally hidden until the complete Yahoo Player List sync succeeds.</span></div>`;
+      return;
+    }
+
+    const tiers=Array.from({length:TIER_COUNT},(_,i)=>{
+      const start=i*12+1,end=start+11;
+      return shown.filter(p=>Number(p.yahoo_rank)>=start&&Number(p.yahoo_rank)<=end);
+    });
+    const late=shown.filter(p=>Number(p.yahoo_rank)>144||!Number.isFinite(Number(p.yahoo_rank)));
+
+    $('content').innerHTML=`
+      <div class="draft-summary"><div><span>YAHOO PLAYERS</span><b>${all.length}</b></div><div><span>TARGETED</span><b>${targeted}</b></div><div><span>TIERS</span><b>${TIER_COUNT}</b></div><div><span>ORDER</span><b>YAHOO</b></div></div>
+      <div class="tier-grid">${tiers.map((g,i)=>tier(i+1,g)).join('')}</div>
+      ${late.length?`<section class="late-pool"><div class="late-pool-head"><b>LATE POOL</b><span>Yahoo #145+ · ${late.length} players</span></div><div class="late-grid">${late.map(draftRow).join('')}</div></section>`:''}`;
     bindTargets();
   }
 
   function tier(n,a){
-    const ranks=a.map(x=>Number(x.yahoo_rank)).filter(Number.isFinite);
-    return `<section class="tier"><div class="tier-head"><b>TIER ${n}</b><span>${ranks.length?`Yahoo #${Math.min(...ranks)}-${Math.max(...ranks)}`:'No matches'} · ${a.length}</span></div>${a.map(draftRow).join('')}</section>`;
+    const start=(n-1)*12+1,end=start+11;
+    return `<section class="tier"><div class="tier-head"><b>TIER ${n}</b><span>Yahoo #${start}-${end} · ${a.length}</span></div>${a.map(draftRow).join('')}</section>`;
   }
 
   function draftRow(p){
