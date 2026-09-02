@@ -1,486 +1,169 @@
 (() => {
   'use strict';
 
-  const CONFIG = Object.freeze({
-    supabaseUrl: 'https://bbodmhffnqebhfksjier.supabase.co',
-    publishableKey: 'sb_publishable_L048cgw2gZwCeWmSWpUclA_cuKCSyQn',
-    refreshMs: 60_000,
-    leagueSize: 12,
-    tokenStorageKey: 'fantasyFootball2026AppKey'
-  });
+  const SB = 'https://bbodmhffnqebhfksjier.supabase.co';
+  const API_KEY = 'sb_publishable_L048cgw2gZwCeWmSWpUclA_cuKCSyQn';
+  const APP_KEY_STORAGE = 'fantasyFootball2026AppKey';
+  const LEAGUE_SIZE = 12;
+  const MAX_TIERS = 12;
+  const REFRESH_MS = 60000;
+  const H = {apikey: API_KEY, Authorization: `Bearer ${API_KEY}`, 'Content-Type':'application/json'};
 
-  const state = {
-    view: 'draft',
-    position: 'ALL',
-    query: '',
-    feed: [],
-    intel: [],
-    weather: [],
-    plan: [],
-    owner: [],
-    errors: []
-  };
+  const S = {view:'draft', pos:'ALL', q:'', players:[], intel:[], weather:[], owner:[], errors:[]};
+  const $ = id => document.getElementById(id);
+  const POS = ['ALL','QB','RB','WR','TE','DEF','K'];
+  const TITLES = {intel:'INTEL',players:'PLAYERS',targets:'TARGETS',cowbell:'COWBELL',injuries:'INJURIES',weather:'WEATHER',draft:'DRAFT'};
+  const FILTER_VIEWS = new Set(['players','targets','cowbell','injuries','draft']);
 
-  const VIEW_TITLES = Object.freeze({
-    intel: 'INTEL',
-    players: 'PLAYERS',
-    targets: 'TARGETS',
-    cowbell: 'COWBELL',
-    injuries: 'INJURIES',
-    weather: 'WEATHER',
-    draft: 'DRAFT'
-  });
-
-  const FILTERED_VIEWS = new Set(['draft', 'players', 'targets', 'cowbell', 'injuries']);
-  const POSITIONS = ['ALL', 'QB', 'RB', 'WR', 'TE', 'DEF', 'K'];
-
-  const $ = (id) => document.getElementById(id);
-  const app = $('app');
-  const content = $('content');
-  const filters = $('filters');
-  const notice = $('notice');
-  const syncPill = $('syncPill');
-
-  const headers = Object.freeze({
-    apikey: CONFIG.publishableKey,
-    Authorization: `Bearer ${CONFIG.publishableKey}`,
-    'Content-Type': 'application/json'
-  });
-
-  function escapeHtml(value) {
-    return String(value ?? '').replace(/[&<>"']/g, (char) => ({
-      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-    })[char]);
-  }
-
-  function normalizePosition(value) {
-    const position = String(value || '').toUpperCase();
-    return ['QB', 'RB', 'WR', 'TE', 'DEF', 'K'].includes(position) ? position : 'X';
-  }
-
-  function tierFromYahooRank(rank) {
-    const numericRank = Number(rank);
-    return Number.isFinite(numericRank) && numericRank > 0
-      ? Math.ceil(numericRank / CONFIG.leagueSize)
-      : null;
-  }
-
-  function uniqueTags(values) {
-    return [...new Set(values.filter(Boolean).map((value) => String(value).trim().toUpperCase()).filter(Boolean))];
-  }
-
-  function tagsForPlayer(player) {
-    return uniqueTags([
-      ...(player.intel_tags || []),
-      ...(player.tags || []),
-      player.user_target ? 'TARGET' : null,
-      player.intel_action
-    ]);
-  }
-
-  function tagClass(tag) {
-    const value = String(tag || '').toLowerCase();
-    if (value.includes('target')) return 'target';
-    if (value.includes('cowbell')) return 'cowbell';
-    if (value.includes('bellcow')) return 'bellcow';
-    if (value.includes('stack')) return 'stack';
-    if (value.includes('injur')) return 'injury';
-    if (value.includes('monitor')) return 'monitor';
-    if (value.includes('handcuff')) return 'handcuff';
-    if (value.includes('workhorse')) return 'workhorse';
-    if (value.includes('upgrade')) return 'upgrade';
-    if (value.includes('downgrade')) return 'downgrade';
-    if (value.includes('avoid')) return 'avoid';
+  const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const normPos = v => ['QB','RB','WR','TE','DEF','K'].includes(String(v||'').toUpperCase()) ? String(v).toUpperCase() : 'X';
+  const sortYahoo = (a,b) => (Number(a.yahoo_rank)||9999)-(Number(b.yahoo_rank)||9999) || String(a.yahoo_name||a.name||'').localeCompare(String(b.yahoo_name||b.name||''));
+  const uniq = a => [...new Set(a.filter(Boolean).map(x=>String(x).trim().toUpperCase()).filter(Boolean))];
+  const tagClass = t => {
+    const x=String(t||'').toLowerCase();
+    for (const k of ['target','cowbell','bellcow','stack','injury','monitor','handcuff','workhorse','upgrade','downgrade','avoid']) if(x.includes(k)) return k;
     return '';
+  };
+  const tags = p => uniq([...(p.intel_tags||[]),...(p.user_tags||[]),p.user_target?'TARGET':null,p.intel_action]);
+  const matchPos = p => S.pos==='ALL' || normPos(p.position||p.pos)===S.pos;
+  const matchQuery = obj => !S.q || Object.values(obj||{}).map(v=>Array.isArray(v)?v.join(' '):String(v??'')).join(' ').toLowerCase().includes(S.q);
+
+  async function api(path, options={}) {
+    const r = await fetch(`${SB}/rest/v1/${path}`, {...options, headers:{...H,...(options.headers||{})}});
+    if(!r.ok) throw new Error(await r.text() || `${r.status}`);
+    return r.status===204 ? null : r.json();
+  }
+  async function safe(name,path,fallback=[]) {
+    try { return {name,data:await api(path),error:null}; }
+    catch(error){ return {name,data:fallback,error}; }
   }
 
-  function matchesQuery(record) {
-    if (!state.query) return true;
-    const searchable = Object.values(record || {})
-      .map((value) => Array.isArray(value) ? value.join(' ') : String(value ?? ''))
-      .join(' ')
-      .toLowerCase();
-    return searchable.includes(state.query);
-  }
+  function setSync(state,label){ $('syncPill').dataset.state=state; $('sync').textContent=label; }
 
-  function matchesPosition(record) {
-    if (state.position === 'ALL') return true;
-    return normalizePosition(record.position || record.pos) === state.position;
-  }
-
-  async function request(path, options = {}) {
-    const response = await fetch(`${CONFIG.supabaseUrl}/rest/v1/${path}`, {
-      ...options,
-      headers: { ...headers, ...(options.headers || {}) }
-    });
-    if (!response.ok) {
-      const message = await response.text();
-      throw new Error(message || `${response.status} ${response.statusText}`);
-    }
-    if (response.status === 204) return null;
-    return response.json();
-  }
-
-  async function loadResource(name, path, transform = (value) => value, fallback = []) {
-    try {
-      const value = await request(path);
-      return { name, data: transform(value), error: null };
-    } catch (error) {
-      return { name, data: fallback, error };
-    }
-  }
-
-  function feedPlanFallback(feed) {
-    return feed
-      .filter((player) => player.user_target)
-      .map((player) => ({
-        player_key: player.player_key,
-        yahoo_canonical_name: player.yahoo_name,
-        name: player.yahoo_name,
-        team: player.team,
-        pos: player.position,
-        yahoo_rank: player.yahoo_rank,
-        tags: player.intel_tags || []
-      }))
-      .sort(sortByYahooRank);
-  }
-
-  function sortByYahooRank(a, b) {
-    return (Number(a.yahoo_rank) || 9999) - (Number(b.yahoo_rank) || 9999)
-      || String(a.name || a.yahoo_name || '').localeCompare(String(b.name || b.yahoo_name || ''));
-  }
-
-  async function loadData() {
-    setSync('loading', 'SYNCING');
-    const resources = await Promise.all([
-      loadResource('players', 'yahoo_canonical_player_feed?select=*&order=yahoo_rank.asc.nullslast,yahoo_name.asc'),
-      loadResource('intel', 'intel_items?select=*&status=neq.RESOLVED&order=priority.asc,updated_at.desc'),
-      loadResource('weather', 'weather_watch?select=*&order=game_time.asc.nullslast'),
-      loadResource('plan', 'draft_command_plan?select=targets,version,league_size,roster_spots&id=eq.1', (rows) => (rows?.[0]?.targets || []).slice().sort(sortByYahooRank)),
-      loadResource('owner', 'intel_owner_state?select=*')
+  async function load(){
+    setSync('loading','SYNCING');
+    const rs = await Promise.all([
+      safe('catalog','draft_player_catalog?select=player_key,yahoo_name,display_name,team,position,role,yahoo_rank,consensus_rank,yahoo_verified,active&active=eq.true&order=yahoo_rank.asc.nullslast,yahoo_name.asc'),
+      safe('targets','draft_target_selection?select=player_key,user_target,user_tags,user_note,priority&user_target=eq.true'),
+      safe('overlay','yahoo_canonical_player_feed?select=*'),
+      safe('intel','intel_items?select=*&status=neq.RESOLVED&order=priority.asc,updated_at.desc'),
+      safe('weather','weather_watch?select=*&order=game_time.asc.nullslast'),
+      safe('owner','intel_owner_state?select=*')
     ]);
-
-    const byName = Object.fromEntries(resources.map((resource) => [resource.name, resource]));
-    state.feed = byName.players.data;
-    state.intel = byName.intel.data;
-    state.weather = byName.weather.data;
-    state.owner = byName.owner.data;
-    state.plan = byName.plan.data.length ? byName.plan.data : feedPlanFallback(state.feed);
-    state.errors = resources.filter((resource) => resource.error).map((resource) => resource.name);
-
-    if (!state.feed.length && !state.plan.length && byName.players.error && byName.plan.error) {
-      setSync('error', 'ERROR');
-    } else if (state.errors.length) {
-      setSync('partial', 'PARTIAL');
-    } else {
-      setSync('live', 'LIVE');
-    }
-
+    const R=Object.fromEntries(rs.map(x=>[x.name,x]));
+    const targetMap=new Map(R.targets.data.map(x=>[x.player_key,x]));
+    const overlayMap=new Map(R.overlay.data.map(x=>[x.player_key,x]));
+    S.players=R.catalog.data.map(p=>{
+      const t=targetMap.get(p.player_key), o=overlayMap.get(p.player_key)||{};
+      return {...p,
+        user_target:!!t?.user_target,user_tags:t?.user_tags||[],user_note:t?.user_note||null,user_priority:t?.priority??null,
+        intel_tags:o.intel_tags||[],intel_action:o.intel_action||null,intel_priority:o.intel_priority||null,
+        intel_recommendation:o.intel_recommendation||null,intel_what_changed:o.intel_what_changed||null,suggestions:o.suggestions||[]
+      };
+    }).sort(sortYahoo);
+    S.intel=R.intel.data; S.weather=R.weather.data; S.owner=R.owner.data;
+    S.errors=rs.filter(x=>x.error).map(x=>x.name);
+    setSync(S.errors.length ? (S.players.length?'partial':'error') : 'live', S.errors.length ? (S.players.length?'PARTIAL':'ERROR') : 'LIVE');
     render();
   }
 
-  function setSync(status, label) {
-    syncPill.dataset.state = status;
-    $('sync').textContent = label;
+  function render(){
+    $('app').dataset.view=S.view;
+    $('viewTitle').textContent=TITLES[S.view];
+    document.querySelectorAll('.nav-inner button').forEach(b=>b.classList.toggle('active',b.dataset.view===S.view));
+    $('intelCount').textContent=S.intel.length;
+    $('highCount').textContent=S.intel.filter(x=>['HIGH','CRITICAL'].includes(String(x.priority||'').toUpperCase())).length;
+    $('flagCount').textContent=S.owner.filter(x=>x.is_flagged).length;
+    $('targetCount').textContent=S.players.filter(x=>x.user_target).length;
+    renderFilters(); renderNotice(); renderView();
   }
 
-  function render() {
-    app.dataset.view = state.view;
-    $('viewTitle').textContent = VIEW_TITLES[state.view];
-    document.querySelectorAll('.nav-inner button').forEach((button) => {
-      button.classList.toggle('active', button.dataset.view === state.view);
-    });
-    renderStats();
-    renderFilters();
-    renderNotice();
-    renderView();
+  function renderFilters(){
+    const choices=FILTER_VIEWS.has(S.view)?POS:['ALL'];
+    $('filters').innerHTML=choices.map(p=>`<button class="filter-chip ${S.pos===p?'active':''}" data-pos="${p}">${p}</button>`).join('');
+    $('filters').querySelectorAll('[data-pos]').forEach(b=>b.onclick=()=>{S.pos=b.dataset.pos;renderFilters();renderView();});
+  }
+  function renderNotice(){
+    const n=$('notice');
+    if(!S.errors.length){n.hidden=true;n.textContent='';return;}
+    n.hidden=false;n.textContent=`Some optional data could not load (${S.errors.join(', ')}). Yahoo player data remains available.`;
+  }
+  function renderView(){
+    if(S.view==='draft') return renderDraft();
+    if(S.view==='players') return renderPlayers(false);
+    if(S.view==='targets') return renderPlayers(true);
+    if(S.view==='cowbell') return renderSpecial('cowbell');
+    if(S.view==='injuries') return renderSpecial('injuries');
+    if(S.view==='weather') return renderWeather();
+    return renderIntel();
   }
 
-  function renderStats() {
-    $('intelCount').textContent = state.intel.length;
-    $('highCount').textContent = state.intel.filter((item) => ['HIGH', 'CRITICAL'].includes(String(item.priority || '').toUpperCase())).length;
-    $('flagCount').textContent = state.owner.filter((item) => item.is_flagged).length;
-    $('targetCount').textContent = state.plan.length;
+  function filteredPlayers(targetOnly=false){
+    return S.players.filter(p=>(!targetOnly||p.user_target)&&matchPos(p)&&matchQuery(p)).sort(sortYahoo);
   }
 
-  function renderFilters() {
-    const positions = FILTERED_VIEWS.has(state.view) ? POSITIONS : ['ALL'];
-    filters.innerHTML = positions.map((position) => (
-      `<button type="button" class="filter-chip ${state.position === position ? 'active' : ''}" data-position="${position}">${position}</button>`
-    )).join('');
-
-    filters.querySelectorAll('[data-position]').forEach((button) => {
-      button.addEventListener('click', () => {
-        state.position = button.dataset.position;
-        renderFilters();
-        renderView();
-      });
-    });
+  function renderPlayers(targetOnly){
+    const a=filteredPlayers(targetOnly);
+    $('viewMeta').textContent=targetOnly?`${a.length} starred targets`:`${a.length} Yahoo players`;
+    $('content').innerHTML=`<div class="list-stack">${a.map(playerCard).join('')||'<div class="empty">No players match.</div>'}</div>`;
+    bindStars();
   }
 
-  function renderNotice() {
-    if (!state.errors.length) {
-      notice.hidden = true;
-      notice.textContent = '';
-      return;
-    }
-    notice.hidden = false;
-    notice.textContent = `Some optional data could not load (${state.errors.join(', ')}). Available sections remain usable.`;
+  function playerCard(p){
+    const po=normPos(p.position), ts=tags(p).slice(0,6);
+    return `<article class="card"><div class="card-top"><span class="position-badge ${po}">${po}</span><div style="display:flex;align-items:center;gap:7px"><span class="rank-badge">Yahoo #${esc(p.yahoo_rank??'—')}</span><button class="target-toggle ${p.user_target?'active':''}" data-key="${esc(p.player_key)}" data-target="${p.user_target?'false':'true'}">${p.user_target?'★':'☆'}</button></div></div><div class="card-name">${esc(p.yahoo_name||p.display_name)}</div><div class="card-meta">${esc(p.team||'')}${p.yahoo_verified?' · Yahoo verified':''}</div>${ts.length?`<div class="tags">${ts.map(tagHtml).join('')}</div>`:''}${p.intel_recommendation?`<div class="card-rec">${esc(p.intel_recommendation)}</div>`:''}</article>`;
   }
 
-  function renderView() {
-    switch (state.view) {
-      case 'draft': renderDraft(); break;
-      case 'players': renderPlayerList({ targetOnly: false }); break;
-      case 'targets': renderPlayerList({ targetOnly: true }); break;
-      case 'cowbell': renderCowbell(); break;
-      case 'injuries': renderInjuries(); break;
-      case 'weather': renderWeather(); break;
-      default: renderIntel();
-    }
+  function renderDraft(){
+    const a=filteredPlayers(true);
+    $('viewMeta').textContent=`${a.length} targets · Yahoo order · ${Math.min(MAX_TIERS,Math.ceil(a.length/LEAGUE_SIZE))} tiers`;
+    if(!a.length){$('content').innerHTML='<div class="empty">No targets match.</div>';return;}
+    const groups=[];
+    a.forEach((p,i)=>{const t=Math.min(MAX_TIERS,Math.ceil((i+1)/LEAGUE_SIZE));(groups[t-1]??=[]).push(p);});
+    $('content').innerHTML=`<div class="draft-summary"><div class="draft-summary-card"><span>STATUS</span><strong>PRE</strong></div><div class="draft-summary-card"><span>TARGETS</span><strong>${S.players.filter(x=>x.user_target).length}</strong></div><div class="draft-summary-card"><span>LEAGUE</span><strong>${LEAGUE_SIZE}</strong></div><div class="draft-summary-card"><span>ORDER</span><strong>YAHOO</strong></div></div><div class="tier-grid">${groups.map((g,i)=>tierBox(i+1,g)).join('')}</div>`;
   }
 
-  function activeIntelFor(playerName) {
-    const target = String(playerName || '').trim().toLowerCase();
-    if (!target) return null;
-    return state.intel.find((item) => String(item.player_name || '').trim().toLowerCase() === target) || null;
+  function tierBox(n,a){
+    const ranks=a.map(x=>Number(x.yahoo_rank)).filter(Number.isFinite);
+    const label=ranks.length?`Yahoo #${Math.min(...ranks)}-${Math.max(...ranks)}`:'Yahoo rank pending';
+    return `<section class="tier-box"><div class="tier-head"><strong>TIER ${n}</strong><span>${label} · ${a.length}</span></div>${a.map(draftRow).join('')}</section>`;
+  }
+  function draftRow(p){
+    const po=normPos(p.position), intel=S.intel.find(x=>String(x.player_name||'').toLowerCase()===String(p.yahoo_name||'').toLowerCase());
+    const ts=uniq([...(p.user_tags||[]),...(p.intel_tags||[]),...(intel?.draft_tags||[]),intel?.action]).slice(0,5);
+    return `<div class="draft-row ${po}"><div class="draft-rank">${esc(p.yahoo_rank??'—')}</div><span class="position-badge ${po}">${po}</span><div class="draft-player"><div class="draft-name">${esc(p.yahoo_name)}</div><div class="draft-meta">${esc(p.team||'')} · Yahoo #${esc(p.yahoo_rank??'—')}</div>${ts.length?`<div class="tags">${ts.map(tagHtml).join('')}</div>`:''}${intel?.recommendation?`<div class="draft-intel">${esc(intel.recommendation)}</div>`:''}</div><span class="ready">READY</span></div>`;
   }
 
-  function renderDraft() {
-    const rows = state.plan
-      .filter(matchesPosition)
-      .filter(matchesQuery)
-      .slice()
-      .sort(sortByYahooRank);
-
-    $('viewMeta').textContent = `${rows.length} plan players · Yahoo order`;
-
-    if (!rows.length) {
-      content.innerHTML = '<div class="empty">No draft players match this filter.</div>';
-      return;
-    }
-
-    const tiers = new Map();
-    rows.forEach((player) => {
-      const tier = tierFromYahooRank(player.yahoo_rank) || 99;
-      if (!tiers.has(tier)) tiers.set(tier, []);
-      tiers.get(tier).push(player);
-    });
-
-    const tierHtml = [...tiers.entries()]
-      .sort(([tierA], [tierB]) => tierA - tierB)
-      .map(([tier, players]) => renderTier(tier, players))
-      .join('');
-
-    content.innerHTML = `
-      <div class="draft-summary">
-        <div class="draft-summary-card"><span>STATUS</span><strong>PRE</strong></div>
-        <div class="draft-summary-card"><span>PLAN</span><strong>${state.plan.length}</strong></div>
-        <div class="draft-summary-card"><span>LEAGUE</span><strong>${CONFIG.leagueSize}</strong></div>
-        <div class="draft-summary-card"><span>ORDER</span><strong>YAHOO</strong></div>
-      </div>
-      <div class="tier-grid">${tierHtml}</div>`;
+  function renderSpecial(type){
+    const injury=/injur|practice|pup|\bir\b/i;
+    let a=S.players.filter(p=>type==='cowbell'?tags(p).some(t=>/COWBELL|BELLCOW|WORKHORSE/.test(t)):tags(p).some(t=>/INJUR|MONITOR/.test(t))||injury.test(`${p.intel_what_changed||''} ${p.intel_recommendation||''}`));
+    a=a.filter(matchPos).filter(matchQuery).sort(sortYahoo);
+    $('viewMeta').textContent=`${a.length} players`; $('content').innerHTML=`<div class="list-stack">${a.map(playerCard).join('')||'<div class="empty">No players match.</div>'}</div>`; bindStars();
   }
-
-  function renderTier(tier, players) {
-    const start = (tier - 1) * CONFIG.leagueSize + 1;
-    const end = tier * CONFIG.leagueSize;
-    return `
-      <section class="tier-box">
-        <div class="tier-head">
-          <strong>TIER ${tier}</strong>
-          <span>Yahoo ${start}-${end} · ${players.length}</span>
-        </div>
-        ${players.map(renderDraftRow).join('')}
-      </section>`;
+  function renderIntel(){
+    const a=S.intel.filter(matchQuery); $('viewMeta').textContent=`${a.length} active intel items`;
+    $('content').innerHTML=`<div class="list-stack">${a.map(x=>{const po=normPos(x.position),act=x.action||'MONITOR';return `<article class="card"><div class="card-top"><span class="position-badge ${po}">${po}</span><span class="tag ${tagClass(act)}">${esc(act)}</span></div><div class="card-name">${esc(x.player_name)}</div><div class="card-meta">${esc(x.team||'')} · ${esc(x.priority||'')}</div><div class="card-text">${esc(x.what_changed||'')}</div>${x.recommendation?`<div class="card-rec"><b>WHAT TO DO</b><br>${esc(x.recommendation)}</div>`:''}</article>`}).join('')||'<div class="empty">No active intel.</div>'}</div>`;
   }
-
-  function renderDraftRow(player) {
-    const position = normalizePosition(player.pos || player.position);
-    const name = player.yahoo_canonical_name || player.name || player.yahoo_name || 'Unknown player';
-    const intel = activeIntelFor(name);
-    const tags = uniqueTags([...(player.tags || []), ...(intel?.draft_tags || []), intel?.action]).slice(0, 5);
-    const recommendation = intel?.recommendation || '';
-
-    return `
-      <div class="draft-row ${position}">
-        <div class="draft-rank">${escapeHtml(player.yahoo_rank ?? '—')}</div>
-        <span class="position-badge ${position}">${position}</span>
-        <div class="draft-player">
-          <div class="draft-name">${escapeHtml(name)}</div>
-          <div class="draft-meta">${escapeHtml(player.team || '')} · Yahoo #${escapeHtml(player.yahoo_rank ?? '—')}</div>
-          ${tags.length ? `<div class="tags">${tags.map(renderTag).join('')}</div>` : ''}
-          ${recommendation ? `<div class="draft-intel">${escapeHtml(recommendation)}</div>` : ''}
-        </div>
-        <span class="ready">READY</span>
-      </div>`;
+  function renderWeather(){
+    const a=S.weather.filter(matchQuery); $('viewMeta').textContent=`${a.length} watched games`;
+    $('content').innerHTML=`<div class="list-stack">${a.map(g=>`<article class="card"><div class="card-name">${esc(g.away_team)} @ ${esc(g.home_team)}</div><div class="card-meta">${esc(g.venue||'')}${g.condition?` · ${esc(g.condition)}`:''}</div><div class="card-text">Wind ${esc(g.wind_mph??'—')} mph · Temp ${esc(g.temperature_f??'—')}°F · Precip ${esc(g.precipitation_pct??'—')}%</div><div class="card-rec">${esc(g.fantasy_impact||'No material weather impact yet.')}</div></article>`).join('')||'<div class="empty">No material weather items yet.</div>'}</div>`;
   }
+  const tagHtml=t=>`<span class="tag ${tagClass(t)}">${esc(t)}</span>`;
 
-  function renderPlayerList({ targetOnly }) {
-    const players = state.feed
-      .filter((player) => !targetOnly || player.user_target)
-      .filter(matchesPosition)
-      .filter(matchesQuery)
-      .slice()
-      .sort(sortByYahooRank);
-
-    $('viewMeta').textContent = `${players.length} players`;
-    content.innerHTML = `<div class="list-stack">${players.map(renderPlayerCard).join('') || '<div class="empty">No players match.</div>'}</div>`;
-    bindTargetButtons();
+  function bindStars(){$('content').querySelectorAll('.target-toggle').forEach(b=>b.onclick=()=>toggleStar(b.dataset.key,b.dataset.target==='true'));}
+  async function toggleStar(key,target){
+    const token=localStorage.getItem(APP_KEY_STORAGE); if(!token){openKey();return;}
+    try{await api('rpc/mobile_set_target',{method:'POST',body:JSON.stringify({p_token:token,p_player_key:key,p_target:target})});await load();}
+    catch(e){localStorage.removeItem(APP_KEY_STORAGE);window.alert('Target update failed. Re-enter the app key.');openKey();}
   }
+  function openKey(){$('keyInput').value=localStorage.getItem(APP_KEY_STORAGE)||'';$('keyModal').hidden=false;setTimeout(()=>$('keyInput').focus(),0);}
+  function closeKey(){$('keyModal').hidden=true;}
+  function saveKey(){const v=$('keyInput').value.trim();if(v)localStorage.setItem(APP_KEY_STORAGE,v);closeKey();}
 
-  function renderPlayerCard(player) {
-    const position = normalizePosition(player.position);
-    const tags = tagsForPlayer(player).slice(0, 6);
-    return `
-      <article class="card">
-        <div class="card-top">
-          <span class="position-badge ${position}">${position}</span>
-          <div style="display:flex;align-items:center;gap:7px">
-            <span class="rank-badge">Yahoo #${escapeHtml(player.yahoo_rank ?? '—')}</span>
-            <button type="button" class="target-toggle ${player.user_target ? 'active' : ''}" data-player-key="${escapeHtml(player.player_key)}" data-target="${player.user_target ? 'false' : 'true'}" aria-label="${player.user_target ? 'Remove target' : 'Add target'}">${player.user_target ? '★' : '☆'}</button>
-          </div>
-        </div>
-        <div class="card-name">${escapeHtml(player.yahoo_name)}</div>
-        <div class="card-meta">${escapeHtml(player.team || '')} · Tier ${escapeHtml(tierFromYahooRank(player.yahoo_rank) || '—')}</div>
-        ${tags.length ? `<div class="tags">${tags.map(renderTag).join('')}</div>` : ''}
-        ${player.intel_recommendation ? `<div class="card-rec">${escapeHtml(player.intel_recommendation)}</div>` : ''}
-      </article>`;
-  }
+  $('search').oninput=e=>{S.q=e.target.value.trim().toLowerCase();renderView();};
+  document.querySelectorAll('.nav-inner button').forEach(b=>b.onclick=()=>{S.view=b.dataset.view;S.pos='ALL';render();scrollTo({top:0,behavior:'smooth'});});
+  $('keyButton').onclick=openKey; $('saveKeyButton').onclick=saveKey; document.querySelectorAll('[data-close-modal]').forEach(x=>x.onclick=closeKey);
+  $('keyInput').onkeydown=e=>{if(e.key==='Enter')saveKey();if(e.key==='Escape')closeKey();};
 
-  function renderCowbell() {
-    const players = state.feed
-      .filter((player) => tagsForPlayer(player).some((tag) => tag.includes('COWBELL') || tag.includes('BELLCOW') || tag.includes('WORKHORSE')))
-      .filter(matchesPosition)
-      .filter(matchesQuery)
-      .slice()
-      .sort(sortByYahooRank);
-
-    $('viewMeta').textContent = `${players.length} cowbell players`;
-    content.innerHTML = `<div class="list-stack">${players.map(renderPlayerCard).join('') || '<div class="empty">No cowbell players match.</div>'}</div>`;
-    bindTargetButtons();
-  }
-
-  function renderInjuries() {
-    const injuryPattern = /injur|practice|pup|\bir\b/i;
-    const players = state.feed
-      .filter((player) => tagsForPlayer(player).some((tag) => tag.includes('INJUR') || tag.includes('MONITOR'))
-        || injuryPattern.test(`${player.intel_what_changed || ''} ${player.intel_recommendation || ''}`))
-      .filter(matchesPosition)
-      .filter(matchesQuery)
-      .slice()
-      .sort(sortByYahooRank);
-
-    $('viewMeta').textContent = `${players.length} injury watches`;
-    content.innerHTML = `<div class="list-stack">${players.map(renderPlayerCard).join('') || '<div class="empty">No injury watches match.</div>'}</div>`;
-    bindTargetButtons();
-  }
-
-  function renderIntel() {
-    const items = state.intel.filter(matchesQuery);
-    $('viewMeta').textContent = `${items.length} active intel items`;
-    content.innerHTML = `<div class="list-stack">${items.map((item) => {
-      const position = normalizePosition(item.position);
-      const action = item.action || 'MONITOR';
-      return `
-        <article class="card">
-          <div class="card-top">
-            <span class="position-badge ${position}">${position}</span>
-            <span class="tag ${tagClass(action)}">${escapeHtml(action)}</span>
-          </div>
-          <div class="card-name">${escapeHtml(item.player_name)}</div>
-          <div class="card-meta">${escapeHtml(item.team || '')} · ${escapeHtml(item.priority || '')}</div>
-          <div class="card-text">${escapeHtml(item.what_changed || '')}</div>
-          ${item.recommendation ? `<div class="card-rec"><b>WHAT TO DO</b><br>${escapeHtml(item.recommendation)}</div>` : ''}
-        </article>`;
-    }).join('') || '<div class="empty">No active intel.</div>'}</div>`;
-  }
-
-  function renderWeather() {
-    const games = state.weather.filter(matchesQuery);
-    $('viewMeta').textContent = `${games.length} watched games`;
-    content.innerHTML = `<div class="list-stack">${games.map((game) => `
-      <article class="card">
-        <div class="card-name">${escapeHtml(game.away_team)} @ ${escapeHtml(game.home_team)}</div>
-        <div class="card-meta">${escapeHtml(game.venue || '')}${game.condition ? ` · ${escapeHtml(game.condition)}` : ''}</div>
-        <div class="card-text">Wind ${escapeHtml(game.wind_mph ?? '—')} mph · Temp ${escapeHtml(game.temperature_f ?? '—')}°F · Precip ${escapeHtml(game.precipitation_pct ?? '—')}%</div>
-        <div class="card-rec">${escapeHtml(game.fantasy_impact || 'No material weather impact yet.')}</div>
-      </article>`).join('') || '<div class="empty">No material weather items yet.</div>'}</div>`;
-  }
-
-  function renderTag(tag) {
-    return `<span class="tag ${tagClass(tag)}">${escapeHtml(tag)}</span>`;
-  }
-
-  function bindTargetButtons() {
-    content.querySelectorAll('.target-toggle').forEach((button) => {
-      button.addEventListener('click', () => toggleTarget(button.dataset.playerKey, button.dataset.target === 'true'));
-    });
-  }
-
-  async function toggleTarget(playerKey, targetValue) {
-    const token = localStorage.getItem(CONFIG.tokenStorageKey);
-    if (!token) {
-      openKeyModal();
-      return;
-    }
-
-    try {
-      await request('rpc/mobile_set_target', {
-        method: 'POST',
-        body: JSON.stringify({ p_token: token, p_player_key: playerKey, p_target: targetValue })
-      });
-      const player = state.feed.find((item) => item.player_key === playerKey);
-      if (player) player.user_target = targetValue;
-      await loadData();
-    } catch (error) {
-      window.alert('Target update failed. Check the app key and try again.');
-    }
-  }
-
-  function openKeyModal() {
-    $('keyInput').value = localStorage.getItem(CONFIG.tokenStorageKey) || '';
-    $('keyModal').hidden = false;
-    window.setTimeout(() => $('keyInput').focus(), 0);
-  }
-
-  function closeKeyModal() {
-    $('keyModal').hidden = true;
-  }
-
-  function saveKey() {
-    const value = $('keyInput').value.trim();
-    if (value) localStorage.setItem(CONFIG.tokenStorageKey, value);
-    closeKeyModal();
-  }
-
-  function setView(view) {
-    state.view = view;
-    state.position = 'ALL';
-    render();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-
-  function bindEvents() {
-    $('search').addEventListener('input', (event) => {
-      state.query = event.target.value.trim().toLowerCase();
-      renderView();
-    });
-
-    document.querySelectorAll('.nav-inner button').forEach((button) => {
-      button.addEventListener('click', () => setView(button.dataset.view));
-    });
-
-    $('keyButton').addEventListener('click', openKeyModal);
-    $('saveKeyButton').addEventListener('click', saveKey);
-    document.querySelectorAll('[data-close-modal]').forEach((element) => element.addEventListener('click', closeKeyModal));
-    $('keyInput').addEventListener('keydown', (event) => {
-      if (event.key === 'Enter') saveKey();
-      if (event.key === 'Escape') closeKeyModal();
-    });
-  }
-
-  bindEvents();
-  loadData();
-  window.setInterval(loadData, CONFIG.refreshMs);
+  load(); setInterval(load,REFRESH_MS);
 })();
