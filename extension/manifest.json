@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "Fantasy Football 2026 Live Sync",
+  "version": "1.0.0",
+  "description": "Reads the open Yahoo draft page and syncs drafted players to the separate live viewer. No background Yahoo polling.",
+  "permissions": ["storage", "activeTab"],
+  "host_permissions": [
+    "https://football.fantasysports.yahoo.com/*",
+    "https://bbodmhffnqebhfksjier.supabase.co/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://football.fantasysports.yahoo.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_title": "Fantasy Live Sync",
+    "default_popup": "popup.html"
+  }
+}
