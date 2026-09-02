@@ -65,10 +65,9 @@
 
   const SOURCE_ORDER = {TARGET:0,INTEL:1,EXPERT:2};
   const overallPick = (slot,round) => round % 2 ? ((round-1)*12+slot) : (round*12-slot+1);
-  const esc = v => String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const esc = v => String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
 
   function availabilityWindow(overall,round){
-    // Early rounds are tighter. Later rounds allow more ADP variance.
     const fall = round <= 4 ? 3 : round <= 8 ? 5 : 8;
     const reach = round <= 4 ? 10 : round <= 8 ? 13 : 18;
     return {min:Math.max(1,overall-fall),max:overall+reach};
@@ -93,13 +92,11 @@
       p.rank>=min && p.rank<=max
     );
 
-    // Stay centered on the exact snake pick, then prefer Justin targets, then Intel/expert adds.
     candidates = candidates.sort((a,b)=>{
       const da=Math.abs(a.rank-overall), db=Math.abs(b.rank-overall);
       return da-db || (SOURCE_ORDER[a.source]-SOURCE_ORDER[b.source]) || a.rank-b.rank;
     });
 
-    // If one position is thin, allow the very front of the next tier — never recycle an earlier-round name.
     if(candidates.length<2){
       const expandedMax=max+6;
       const extras=PLAYERS.filter(p=>
@@ -123,9 +120,10 @@
 
   function positionBox(round,pos,overall,result){
     const {mode,options}=result;
-    if(mode==='WAIT') return `<section class="position-box wait"><div class="position-title"><b>${pos}</b><span>WAIT</span></div><div class="wait-text">Boone build says do not spend this round here.</div></section>`;
+    const posClass=`pos-${pos.toLowerCase()}`;
+    if(mode==='WAIT') return `<section class="position-box ${posClass} wait"><div class="position-title"><b>${pos}</b><span>WAIT</span></div><div class="wait-text">Boone build says do not spend this round here.</div></section>`;
     const body=options.length?options.map(playerRow).join(''):`<div class="wait-text">No approved ${pos} fits this exact pick window — do not force it.</div>`;
-    return `<section class="position-box"><div class="position-title"><b>${pos}</b><span>${esc(mode)}</span></div>${body}</section>`;
+    return `<section class="position-box ${posClass}"><div class="position-title"><b>${pos}</b><span>${esc(mode)}</span></div>${body}</section>`;
   }
 
   function triggerBlock(round){
@@ -142,7 +140,6 @@
     $('slotApproach').textContent=approach;
     $('slotBuild').textContent=build;
 
-    // Prevent normal recommendations from being copied into later rounds on the same tab.
     const used=new Set();
     const cards=[];
 
@@ -155,7 +152,6 @@
         results[pos]=candidatesFor(round,pos,overall,used);
       }
 
-      // Once a player was presented as a normal option in this earlier round, do not recycle him later.
       Object.values(results).forEach(r=>r.options.forEach(p=>used.add(p.name)));
 
       const positionOrder=plan.priority.filter(p=>POSITIONS.includes(p));
@@ -177,5 +173,5 @@
 
   $('slotTabs').innerHTML=Array.from({length:12},(_,i)=>`<button type="button" data-slot="${i+1}">PICK ${i+1}</button>`).join('');
   $('slotTabs').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>render(Number(b.dataset.slot))));
-  render(7);
+  render(1);
 })();
