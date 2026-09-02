@@ -55,8 +55,8 @@
     <div class="shade" data-close-key></div>
     <section class="dialog">
       <h3>App key</h3>
-      <p>Enter the app key once. It stays on this device.</p>
-      <input id="keyInput" type="password" inputmode="numeric" autocomplete="off" placeholder="App key">
+      <p>Enter the six-digit app key once. It stays on this device.</p>
+      <input id="keyInput" type="password" inputmode="numeric" autocomplete="off" maxlength="6" pattern="[0-9]{6}" placeholder="6-digit app key">
       <div class="dialog-actions"><button class="secondary" data-close-key>Cancel</button><button class="primary" id="saveKey">Save</button></div>
     </section>
   </div>
@@ -72,7 +72,7 @@
         <label><span>Position</span><select id="mPos"><option>QB</option><option>RB</option><option>WR</option><option>TE</option><option>K</option><option>DEF</option></select></label>
         <label><span>Yahoo rank</span><input id="mRank" type="number" min="1" inputmode="numeric" placeholder="31"></label>
       </div>
-      <div class="dialog-actions"><button class="secondary" data-close-manual>Cancel</button><button class="primary" id="saveManual">Add + Star</button></div>
+      <div class="dialog-actions"><button class="secondary" data-close-manual>Cancel</button><button class="primary" id="saveManual">Add + Target</button></div>
     </section>
   </div>
 
