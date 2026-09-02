@@ -8,13 +8,13 @@
   const TIER_COUNT=15;
   const FILTERS=['ALL','QB','RB','WR','TE','DEF','K','STARRED','INTEL','INJURY'];
   const POSITION_FILTERS=new Set(['QB','RB','WR','TE','DEF','K']);
-  const FILTER_VIEWS=new Set(['players','draft','cowbell','injuries']);
+  const FILTER_VIEWS=new Set(['players','draft','intel','cowbell','injuries']);
   const state={view:'draft',pos:'ALL',q:'',players:[],intel:[],weather:[],owner:[],suggestions:[],errors:[]};
   const $=id=>document.getElementById(id);
 
-  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
+  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const normPos=v=>{const p=String(v||'').toUpperCase();return ['QB','RB','WR','TE','DEF','K'].includes(p)?p:'X'};
-  const sortYahoo=(a,b)=>(Number(a.yahoo_rank)||9999)-(Number(b.yahoo_rank)||9999)||String(a.yahoo_name||'').localeCompare(String(b.yahoo_name||''));
+  const sortYahoo=(a,b)=>(Number(a.yahoo_rank)||9999)-(Number(b.yahoo_rank)||9999)||String(a.yahoo_name||a.display_name||'').localeCompare(String(b.yahoo_name||b.display_name||''));
   const uniq=a=>[...new Set(a.filter(Boolean).map(x=>String(x).trim().toUpperCase()).filter(Boolean))];
   const normName=v=>String(v||'').toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g,' ').replace(/\b(jr|sr|ii|iii|iv)\b/g,' ').replace(/\s+/g,' ').trim();
   const normKey=v=>normName(v);
@@ -57,7 +57,7 @@
   }
 
   function isInjuryPlayer(p){
-    const injury=/injur|questionable|doubtful|limited|practice|pup|\bir\b|hamstring|knee|ankle|heel|concussion|shoulder|groin/i;
+    const injury=/injur|questionable|doubtful|limited|practice|pup|\bir\b|hamstring|knee|ankle|heel|concussion|shoulder|groin|foot|calf|quad|back/i;
     const intel=p.intel_items||[];
     return tags(p).some(t=>/INJUR/.test(t))||intel.some(i=>injury.test(`${i.action||''} ${i.status||''} ${i.what_changed||''} ${i.recommendation||''} ${(i.draft_tags||[]).join(' ')}`));
   }
@@ -70,12 +70,7 @@
     if(!state.q)return true;
     const intel=p.intel_items||[];
     const suggestions=p.suggestions||[];
-    return [
-      p.yahoo_name,p.display_name,p.team,p.position,p.planner_reason,
-      ...(p.planner_tags||[]),
-      ...intel.flatMap(i=>[i.action,i.priority,i.status,i.what_changed,i.recommendation,...(i.draft_tags||[])]),
-      ...suggestions.flatMap(s=>[s.suggestion_type,s.sentiment,s.note,s.source_context,s.source_name,s.suggested_round])
-    ].join(' ').toLowerCase().includes(state.q);
+    return [p.yahoo_name,p.display_name,p.team,p.position,p.planner_reason,...(p.planner_tags||[]),...intel.flatMap(i=>[i.action,i.priority,i.status,i.what_changed,i.recommendation,...(i.draft_tags||[])]),...suggestions.flatMap(s=>[s.suggestion_type,s.sentiment,s.note,s.source_context,s.source_name,s.suggested_round])].join(' ').toLowerCase().includes(state.q);
   }
 
   async function load(){
@@ -107,18 +102,7 @@
       const plan=plannerByKey.get(key)||plannerByName.get(name)||{};
       const intel=(intelByName.get(name)||[]).slice().sort(intelSort);
       const suggestions=(suggestionsByKey.get(key)||suggestionsByKey.get(name)||[]).slice().sort(suggestionSort);
-      return {
-        ...p,
-        user_target:!!t.user_target,
-        user_tags:t.user_tags||[],
-        user_note:t.user_note||null,
-        planner_tags:plan.tags||[],
-        planner_reason:plan.reason||'',
-        planner_last_confirmed_date:plan.last_confirmed_date||null,
-        planner_updated_at:plan.updated_at||null,
-        intel_items:intel,
-        suggestions
-      };
+      return {...p,user_target:!!t.user_target,user_tags:t.user_tags||[],user_note:t.user_note||null,planner_tags:plan.tags||[],planner_reason:plan.reason||'',planner_last_confirmed_date:plan.last_confirmed_date||null,planner_updated_at:plan.updated_at||null,intel_items:intel,suggestions};
     }).sort(sortYahoo);
 
     state.weather=R.weather.data;
@@ -144,11 +128,13 @@
     $('positionFilters').innerHTML=a.map(p=>`<button class="${state.pos===p?'active':''}" data-pos="${p}">${p}</button>`).join('');
     $('positionFilters').querySelectorAll('button').forEach(b=>b.onclick=()=>{state.pos=b.dataset.pos;renderFilters();renderView()});
   }
+
   function renderNotice(){
     const n=$('notice');
     if(!state.errors.length){n.hidden=true;n.textContent='';return}
     n.hidden=false;n.textContent=`Some current data could not load: ${state.errors.join(', ')}.`;
   }
+
   function renderView(){
     if(state.view==='players')return renderPlayers(false);
     if(state.view==='draft')return renderDraft();
@@ -164,14 +150,10 @@
     const intel=p.intel_items||[];
     const suggestions=p.suggestions||[];
     let out='';
-    if(p.planner_reason){out+=`<div class="player-context"><b>PLAYER READ:</b> ${esc(p.planner_reason)}</div>`}
-    if(intel.length){
-      out+=`<details class="player-details" ${intel.length===1?'open':''}><summary>Current Intel (${intel.length})</summary>${intel.map(i=>`<div class="detail-item"><b>${esc(i.action||'MONITOR')} · ${esc(i.priority||'')}</b><div>${esc(i.what_changed||'')}</div>${i.recommendation?`<div><b>WHAT TO DO:</b> ${esc(i.recommendation)}</div>`:''}${i.last_checked_at?`<small>Checked ${esc(new Date(i.last_checked_at).toLocaleString())}</small>`:''}</div>`).join('')}</details>`;
-    }
-    if(suggestions.length){
-      out+=`<details class="player-details"><summary>Research / Strategy (${suggestions.length})</summary>${suggestions.map(s=>`<div class="detail-item"><b>${esc(s.suggestion_type||'RESEARCH')}${s.suggested_round?` · Rd ${esc(s.suggested_round)}`:''}</b><div>${esc(s.note||s.source_context||'')}</div>${s.source_name?`<small>${esc(s.source_name)}${s.source_date?` · ${esc(s.source_date)}`:''}</small>`:''}</div>`).join('')}</details>`;
-    }
-    if(p.user_note){out+=`<div class="player-context"><b>YOUR NOTE:</b> ${esc(p.user_note)}</div>`}
+    if(p.planner_reason)out+=`<div class="player-context"><b>PLAYER READ:</b> ${esc(p.planner_reason)}</div>`;
+    if(intel.length)out+=`<details class="player-details" ${intel.length===1?'open':''}><summary>Current Intel (${intel.length})</summary>${intel.map(i=>`<div class="detail-item"><b>${esc(i.action||'MONITOR')} · ${esc(i.priority||'')}</b><div>${esc(i.what_changed||'')}</div>${i.recommendation?`<div><b>WHAT TO DO:</b> ${esc(i.recommendation)}</div>`:''}${i.last_checked_at?`<small>Checked ${esc(new Date(i.last_checked_at).toLocaleString())}</small>`:''}</div>`).join('')}</details>`;
+    if(suggestions.length)out+=`<details class="player-details"><summary>Research / Strategy (${suggestions.length})</summary>${suggestions.map(s=>`<div class="detail-item"><b>${esc(s.suggestion_type||'RESEARCH')}${s.suggested_round?` · Rd ${esc(s.suggested_round)}`:''}</b><div>${esc(s.note||s.source_context||'')}</div>${s.source_name?`<small>${esc(s.source_name)}${s.source_date?` · ${esc(s.source_date)}`:''}</small>`:''}</div>`).join('')}</details>`;
+    if(p.user_note)out+=`<div class="player-context"><b>YOUR NOTE:</b> ${esc(p.user_note)}</div>`;
     return out;
   }
 
@@ -185,16 +167,11 @@
 
   function playerCard(p){
     const po=normPos(p.position),ts=tags(p);
-    return `<article class="player-card ${p.user_target?'targeted':''}">
-      <div class="card-top"><span class="pos ${po}">${po}</span><div style="display:flex;gap:7px;align-items:center"><span class="rank">Yahoo #${esc(p.yahoo_rank??'—')}</span><button class="target-button ${p.user_target?'on':''}" data-key="${esc(p.player_key)}" data-target="${p.user_target?'false':'true'}">${p.user_target?'TARGETED':'TARGET'}</button></div></div>
-      <div class="player-name">${esc(p.yahoo_name||p.display_name)}</div>
-      <div class="player-meta">${esc(p.team||'')} · Yahoo ranking order</div>
-      ${ts.length?`<div class="tags">${ts.map(t=>`<span class="tag ${tagClass(t)}">${esc(t)}</span>`).join('')}</div>`:''}
-      ${renderPlayerContext(p)}
-    </article>`;
+    return `<article class="player-card ${p.user_target?'targeted':''}"><div class="card-top"><span class="pos ${po}">${po}</span><div style="display:flex;gap:7px;align-items:center"><span class="rank">Yahoo #${esc(p.yahoo_rank??'—')}</span><button class="target-button ${p.user_target?'on':''}" data-key="${esc(p.player_key)}" data-target="${p.user_target?'false':'true'}">${p.user_target?'TARGETED':'TARGET'}</button></div></div><div class="player-name">${esc(p.yahoo_name||p.display_name)}</div><div class="player-meta">${esc(p.team||'')} · Yahoo ranking order</div>${ts.length?`<div class="tags">${ts.map(t=>`<span class="tag ${tagClass(t)}">${esc(t)}</span>`).join('')}</div>`:''}${renderPlayerContext(p)}</article>`;
   }
 
   function bindTargets(){$('content').querySelectorAll('.target-button').forEach(b=>b.onclick=()=>toggleTarget(b.dataset.key,b.dataset.target==='true'))}
+
   async function toggleTarget(key,target){
     const token=localStorage.getItem(APP_KEY);
     if(!token){openKey();return}
@@ -217,51 +194,31 @@
     const gap=firstCatalogGap(all);
     $('pageMeta').textContent=`${shown.length} Yahoo players shown · ${targeted} starred · 15 rounds · 12 picks per round`;
     if(!all.length){$('content').innerHTML='<div class="empty">No Yahoo players synced yet.</div>';return}
-    if(gap){
-      $('content').innerHTML=`<div class="catalog-error"><b>YAHOO CATALOG INCOMPLETE</b><span>Yahoo rank #${gap} is missing. The Draft board is intentionally hidden until the complete Yahoo Player List sync succeeds.</span></div>`;
-      return;
-    }
-
-    const tiers=Array.from({length:TIER_COUNT},(_,i)=>{
-      const start=i*12+1,end=start+11;
-      return shown.filter(p=>Number(p.yahoo_rank)>=start&&Number(p.yahoo_rank)<=end);
-    });
+    if(gap){$('content').innerHTML=`<div class="catalog-error"><b>YAHOO CATALOG INCOMPLETE</b><span>Yahoo rank #${gap} is missing. The Draft board is intentionally hidden until the complete Yahoo Player List sync succeeds.</span></div>`;return}
+    const tiers=Array.from({length:TIER_COUNT},(_,i)=>{const start=i*12+1,end=start+11;return shown.filter(p=>Number(p.yahoo_rank)>=start&&Number(p.yahoo_rank)<=end)});
     const late=shown.filter(p=>Number(p.yahoo_rank)>180||!Number.isFinite(Number(p.yahoo_rank)));
-
-    $('content').innerHTML=`
-      <div class="draft-summary"><div><span>YAHOO PLAYERS</span><b>${all.length}</b></div><div><span>STARRED</span><b>${targeted}</b></div><div><span>ROUNDS</span><b>${TIER_COUNT}</b></div><div><span>ORDER</span><b>YAHOO</b></div></div>
-      <div class="tier-grid">${tiers.map((g,i)=>tier(i+1,g)).join('')}</div>
-      ${late.length?`<section class="late-pool"><div class="late-pool-head"><b>LATE POOL</b><span>Yahoo #181+ · ${late.length} players</span></div><div class="late-grid">${late.map(draftRow).join('')}</div></section>`:''}`;
+    $('content').innerHTML=`<div class="draft-summary"><div><span>YAHOO PLAYERS</span><b>${all.length}</b></div><div><span>STARRED</span><b>${targeted}</b></div><div><span>ROUNDS</span><b>${TIER_COUNT}</b></div><div><span>ORDER</span><b>YAHOO</b></div></div><div class="tier-grid">${tiers.map((g,i)=>tier(i+1,g)).join('')}</div>${late.length?`<section class="late-pool"><div class="late-pool-head"><b>LATE POOL</b><span>Yahoo #181+ · ${late.length} players</span></div><div class="late-grid">${late.map(draftRow).join('')}</div></section>`:''}`;
     bindTargets();
   }
 
-  function tier(n,a){
-    const start=(n-1)*12+1,end=start+11;
-    return `<section class="tier"><div class="tier-head"><b>ROUND ${n}</b><span>Yahoo #${start}-${end} · ${a.length}</span></div>${a.map(draftRow).join('')}</section>`;
-  }
+  function tier(n,a){const start=(n-1)*12+1,end=start+11;return `<section class="tier"><div class="tier-head"><b>ROUND ${n}</b><span>Yahoo #${start}-${end} · ${a.length}</span></div>${a.map(draftRow).join('')}</section>`}
 
   function draftRow(p){
     const po=normPos(p.position),ts=tags(p).filter(t=>t!=='TARGET'),intel=p.intel_items||[];
     const latest=intel[0];
     const context=p.planner_reason||latest?.recommendation||latest?.what_changed||'';
-    return `<div class="draft-row ${po} ${p.user_target?'targeted':''}">
-      <div class="draft-rank">${esc(p.yahoo_rank??'—')}</div><span class="pos ${po}">${po}</span>
-      <div class="draft-player-main"><div class="draft-name">${esc(p.yahoo_name||p.display_name)}</div><div class="draft-meta">${esc(p.team||'')} · Yahoo #${esc(p.yahoo_rank??'—')}</div>${ts.length?`<div class="tags">${ts.slice(0,5).map(t=>`<span class="tag ${tagClass(t)}">${esc(t)}</span>`).join('')}</div>`:''}${context?`<div class="draft-intel">${esc(context)}</div>`:''}</div>
-      <button class="target-button draft-target ${p.user_target?'on':''}" data-key="${esc(p.player_key)}" data-target="${p.user_target?'false':'true'}">${p.user_target?'TARGETED':'TARGET'}</button>
-    </div>`;
+    return `<div class="draft-row ${po} ${p.user_target?'targeted':''}"><div class="draft-rank">${esc(p.yahoo_rank??'—')}</div><span class="pos ${po}">${po}</span><div class="draft-player-main"><div class="draft-name">${esc(p.yahoo_name||p.display_name)}</div><div class="draft-meta">${esc(p.team||'')} · Yahoo #${esc(p.yahoo_rank??'—')}</div>${ts.length?`<div class="tags">${ts.slice(0,5).map(t=>`<span class="tag ${tagClass(t)}">${esc(t)}</span>`).join('')}</div>`:''}${context?`<div class="draft-intel">${esc(context)}</div>`:''}</div><button class="target-button draft-target ${p.user_target?'on':''}" data-key="${esc(p.player_key)}" data-target="${p.user_target?'false':'true'}">${p.user_target?'TARGETED':'TARGET'}</button></div>`;
   }
 
   function renderIntel(){
-    const playerByName=new Map(state.players.map(p=>[normName(p.yahoo_name||p.display_name),p]));
-    const a=state.intel.filter(matchGeneric).slice().sort(intelSort);
-    $('pageMeta').textContent=`${a.length} current Fantasy Intel Watch items`;
-    $('content').innerHTML=`<div class="list">${a.map(x=>{
-      const p=playerByName.get(normName(x.player_name));
-      const name=p?.yahoo_name||p?.display_name||x.player_name;
-      const team=p?.team||x.team||'';
-      const pos=p?.position||x.position;
-      return `<article class="intel-card"><div class="card-top"><span class="pos ${normPos(pos)}">${normPos(pos)}</span><span class="tag ${tagClass(x.action)}">${esc(x.action||'MONITOR')}</span></div><div class="player-name">${esc(name)}</div><div class="player-meta">${esc(team)} · ${esc(x.priority||'')} · ${x.last_checked_at?`Checked ${esc(new Date(x.last_checked_at).toLocaleString())}`:''}</div><p>${esc(x.what_changed||'')}</p>${x.recommendation?`<p><b>WHAT TO DO:</b> ${esc(x.recommendation)}</p>`:''}${x.draft_tags?.length?`<div class="tags">${x.draft_tags.map(t=>`<span class="tag ${tagClass(t)}">${esc(t)}</span>`).join('')}</div>`:''}</article>`;
-    }).join('')||'<div class="empty">No current intel.</div>'}</div>`;
+    const players=state.players.filter(p=>(p.intel_items||[]).length&&matches(p)).sort(sortYahoo);
+    const itemCount=players.reduce((n,p)=>n+(p.intel_items||[]).length,0);
+    $('pageMeta').textContent=`${players.length} players · ${itemCount} current Intel items · Yahoo order`;
+    $('content').innerHTML=`<div class="list">${players.map(p=>{
+      const items=(p.intel_items||[]).slice().sort(intelSort);
+      const latest=items[0]||{};
+      return `<article class="intel-card ${p.user_target?'targeted':''}"><div class="card-top"><span class="pos ${normPos(p.position)}">${normPos(p.position)}</span><div style="display:flex;gap:7px;align-items:center"><span class="rank">Yahoo #${esc(p.yahoo_rank??'—')}</span><span class="tag ${tagClass(latest.action)}">${esc(latest.action||'INTEL')}</span></div></div><div class="player-name">${esc(p.yahoo_name||p.display_name)}</div><div class="player-meta">${esc(p.team||'')} · ${esc(latest.priority||'')} ${latest.last_checked_at?`· Checked ${esc(new Date(latest.last_checked_at).toLocaleString())}`:''}</div>${isInjuryPlayer(p)?'<div class="tags"><span class="tag injury">INJURY</span></div>':''}${items.map(x=>`<p>${esc(x.what_changed||'')}</p>${x.recommendation?`<p><b>WHAT TO DO:</b> ${esc(x.recommendation)}</p>`:''}${x.draft_tags?.length?`<div class="tags">${x.draft_tags.map(t=>`<span class="tag ${tagClass(t)}">${esc(t)}</span>`).join('')}</div>`:''}`).join('')}</article>`;
+    }).join('')||'<div class="empty">No current intel matches.</div>'}</div>`;
   }
 
   function renderWeather(){
@@ -271,12 +228,9 @@
   }
 
   function matchGeneric(x){if(!state.q)return true;return Object.values(x||{}).map(v=>String(v??'')).join(' ').toLowerCase().includes(state.q)}
+
   function renderTagged(type){
-    let a=state.players.filter(p=>{
-      const ts=tags(p);
-      if(type==='cowbell')return ts.some(t=>/COWBELL|WORKHORSE|BELLCOW/.test(t));
-      return isInjuryPlayer(p);
-    });
+    let a=state.players.filter(p=>{const ts=tags(p);if(type==='cowbell')return ts.some(t=>/COWBELL|WORKHORSE|BELLCOW/.test(t));return isInjuryPlayer(p)});
     a=a.filter(matches).sort(sortYahoo);
     $('pageMeta').textContent=`${a.length} current players`;
     $('content').innerHTML=`<div class="list">${a.map(playerCard).join('')||'<div class="empty">No current players match.</div>'}</div>`;
@@ -298,8 +252,14 @@
 
   $('search').oninput=e=>{state.q=e.target.value.trim().toLowerCase();renderView()};
   document.querySelectorAll('.bottom-nav button').forEach(b=>b.onclick=()=>{state.view=b.dataset.view;state.pos='ALL';render();scrollTo({top:0,behavior:'smooth'})});
-  $('keyButton').onclick=openKey;$('saveKey').onclick=saveKey;document.querySelectorAll('[data-close-key]').forEach(x=>x.onclick=closeKey);$('keyInput').onkeydown=e=>{if(e.key==='Enter')saveKey();if(e.key==='Escape')closeKey()};
-  $('saveManual').onclick=saveManual;document.querySelectorAll('[data-close-manual]').forEach(x=>x.onclick=closeManual);$('mRank').onkeydown=e=>{if(e.key==='Enter')saveManual();if(e.key==='Escape')closeManual()};
+  $('keyButton').onclick=openKey;
+  $('saveKey').onclick=saveKey;
+  document.querySelectorAll('[data-close-key]').forEach(x=>x.onclick=closeKey);
+  $('keyInput').onkeydown=e=>{if(e.key==='Enter')saveKey();if(e.key==='Escape')closeKey()};
+  $('saveManual').onclick=saveManual;
+  document.querySelectorAll('[data-close-manual]').forEach(x=>x.onclick=closeManual);
+  $('mRank').onkeydown=e=>{if(e.key==='Enter')saveManual();if(e.key==='Escape')closeManual()};
 
-  load();setInterval(load,60000);
+  load();
+  setInterval(load,60000);
 })();
