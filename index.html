@@ -3,96 +3,79 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#f4f7fb">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="Fantasy Football 2026">
+  <meta name="theme-color" content="#f5f7fb">
   <title>Fantasy Football 2026</title>
-  <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="app" id="app" data-view="draft">
-    <header class="topbar">
-      <div class="topline">
-        <div class="brand">
+  <div class="shell" id="shell" data-view="draft">
+    <header class="app-header">
+      <div class="header-main">
+        <div class="brand-wrap">
           <h1>Fantasy Football 2026</h1>
-          <div class="sub">Yahoo ranking order + live fantasy intelligence</div>
+          <p>Yahoo Player List + your draft intelligence</p>
         </div>
-        <label class="search-wrap" aria-label="Search">
-          <input id="search" class="search" type="search" placeholder="Search player, team, action..." autocomplete="off">
-        </label>
+        <input id="search" class="search" type="search" placeholder="Search player, team, position..." autocomplete="off">
         <div class="header-actions">
-          <button id="keyButton" class="key-button" type="button" aria-label="Set app key">KEY</button>
-          <div id="syncPill" class="status-pill" data-state="loading">
-            <span class="status-dot" aria-hidden="true"></span>
-            <span id="sync">SYNCING</span>
-          </div>
+          <button id="keyButton" class="ghost-btn" type="button">KEY</button>
+          <span id="syncPill" class="sync-pill" data-state="loading"><i></i><b id="syncText">SYNCING</b></span>
         </div>
       </div>
-      <div class="stats" aria-label="Fantasy summary">
-        <div class="stat"><b id="intelCount">—</b><span>INTEL</span></div>
-        <div class="stat"><b id="highCount">—</b><span>HIGH+</span></div>
-        <div class="stat"><b id="flagCount">—</b><span>FLAGGED</span></div>
-        <div class="stat"><b id="targetCount">—</b><span>PLAN PLAYERS</span></div>
+      <div class="summary-grid">
+        <div><b id="yahooCount">—</b><span>YAHOO PLAYERS</span></div>
+        <div><b id="targetCount">—</b><span>TARGETS</span></div>
+        <div><b id="intelCount">—</b><span>INTEL</span></div>
+        <div><b id="flagCount">—</b><span>FLAGGED</span></div>
       </div>
     </header>
-    <section class="viewbar">
+
+    <section class="page-head">
       <div>
-        <h2 id="viewTitle">DRAFT</h2>
-        <div id="positionLegend" class="position-legend" aria-label="Position colors">
-          <span class="position-badge QB">QB</span>
-          <span class="position-badge RB">RB</span>
-          <span class="position-badge WR">WR</span>
-          <span class="position-badge TE">TE</span>
-          <span class="position-badge DEF">DEF</span>
-          <span class="position-badge K">K</span>
-        </div>
+        <h2 id="pageTitle">DRAFT</h2>
+        <div id="positionFilters" class="filter-row"></div>
       </div>
-      <div id="viewMeta" class="view-meta"></div>
+      <div id="pageMeta" class="page-meta"></div>
     </section>
-    <div id="filters" class="filters" aria-label="Position filters"></div>
+
     <div id="notice" class="notice" hidden></div>
-    <main id="content" class="content" aria-live="polite"></main>
+    <main id="content"></main>
   </div>
-  <nav class="bottom-nav" aria-label="Fantasy views">
-    <div class="nav-inner">
-      <button type="button" data-view="intel">INTEL</button>
-      <button type="button" data-view="players">PLAYERS</button>
-      <button type="button" data-view="targets">TARGETS</button>
-      <button type="button" data-view="cowbell">COWBELL</button>
-      <button type="button" data-view="injuries">INJURIES</button>
-      <button type="button" data-view="weather">WEATHER</button>
-      <button type="button" data-view="draft" class="active">DRAFT</button>
-    </div>
+
+  <nav class="bottom-nav">
+    <button data-view="players">PLAYERS</button>
+    <button data-view="targets">TARGETS</button>
+    <button data-view="draft" class="active">DRAFT</button>
+    <button data-view="intel">INTEL</button>
+    <button data-view="cowbell">COWBELL</button>
+    <button data-view="injuries">INJURIES</button>
+    <button data-view="weather">WEATHER</button>
   </nav>
+
   <div id="keyModal" class="modal" hidden>
-    <div class="modal-backdrop" data-close-modal></div>
-    <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="keyTitle">
-      <h3 id="keyTitle">App key</h3>
-      <p>Enter the Fantasy Football 2026 app key. It is saved on this device.</p>
+    <div class="shade" data-close-key></div>
+    <section class="dialog">
+      <h3>App key</h3>
+      <p>Enter the app key once. It stays on this device.</p>
       <input id="keyInput" type="password" inputmode="numeric" autocomplete="off" placeholder="App key">
-      <div class="modal-actions">
-        <button type="button" class="button secondary" data-close-modal>Cancel</button>
-        <button type="button" class="button primary" id="saveKeyButton">Save</button>
-      </div>
+      <div class="dialog-actions"><button class="secondary" data-close-key>Cancel</button><button class="primary" id="saveKey">Save</button></div>
     </section>
   </div>
-  <div id="playerModal" class="modal" hidden>
-    <div class="modal-backdrop" data-close-player-modal></div>
-    <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="playerTitle">
-      <h3 id="playerTitle">Add missing Yahoo player</h3>
-      <p>Use this only if the player is missing from the synced Yahoo Player List.</p>
+
+  <div id="manualModal" class="modal" hidden>
+    <div class="shade" data-close-manual></div>
+    <section class="dialog">
+      <h3>Add missing Yahoo player</h3>
+      <p>Use the exact Yahoo name, team, position and Pre-Season rank.</p>
       <div class="form-grid">
-        <label><span>Name</span><input id="manualName" autocomplete="off" placeholder="Yahoo player name"></label>
-        <label><span>Team</span><input id="manualTeam" autocomplete="off" maxlength="4" placeholder="BUF"></label>
-        <label><span>Position</span><select id="manualPosition"><option>QB</option><option>RB</option><option>WR</option><option>TE</option><option>K</option><option>DEF</option></select></label>
-        <label><span>Yahoo rank</span><input id="manualRank" type="number" min="1" inputmode="numeric" placeholder="31"></label>
+        <label class="wide"><span>Name</span><input id="mName" placeholder="Player name"></label>
+        <label><span>Team</span><input id="mTeam" maxlength="4" placeholder="BUF"></label>
+        <label><span>Position</span><select id="mPos"><option>QB</option><option>RB</option><option>WR</option><option>TE</option><option>K</option><option>DEF</option></select></label>
+        <label><span>Yahoo rank</span><input id="mRank" type="number" min="1" inputmode="numeric" placeholder="31"></label>
       </div>
-      <div class="modal-actions">
-        <button type="button" class="button secondary" data-close-player-modal>Cancel</button>
-        <button type="button" class="button primary" id="savePlayerButton">Add + Star</button>
-      </div>
+      <div class="dialog-actions"><button class="secondary" data-close-manual>Cancel</button><button class="primary" id="saveManual">Add + Star</button></div>
     </section>
   </div>
-  <script src="./app.js" defer></script>
+
+  <script src="app.js" defer></script>
 </body>
 </html>
