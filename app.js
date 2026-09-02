@@ -5,13 +5,13 @@
   const KEY='sb_publishable_L048cgw2gZwCeWmSWpUclA_cuKCSyQn';
   const H={apikey:KEY,Authorization:`Bearer ${KEY}`,'Content-Type':'application/json'};
   const APP_KEY='fantasyFootball2026AppKey';
-  const TIER_COUNT=12;
+  const TIER_COUNT=15;
   const POSITIONS=['ALL','QB','RB','WR','TE','DEF','K'];
-  const FILTER_VIEWS=new Set(['players','targets','draft','cowbell','injuries']);
+  const FILTER_VIEWS=new Set(['players','draft','cowbell','injuries']);
   const state={view:'draft',pos:'ALL',q:'',players:[],intel:[],weather:[],owner:[],suggestions:[],errors:[]};
   const $=id=>document.getElementById(id);
 
-  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
   const normPos=v=>{const p=String(v||'').toUpperCase();return ['QB','RB','WR','TE','DEF','K'].includes(p)?p:'X'};
   const sortYahoo=(a,b)=>(Number(a.yahoo_rank)||9999)-(Number(b.yahoo_rank)||9999)||String(a.yahoo_name||'').localeCompare(String(b.yahoo_name||''));
   const uniq=a=>[...new Set(a.filter(Boolean).map(x=>String(x).trim().toUpperCase()).filter(Boolean))];
@@ -141,7 +141,6 @@
   }
   function renderView(){
     if(state.view==='players')return renderPlayers(false);
-    if(state.view==='targets')return renderPlayers(true);
     if(state.view==='draft')return renderDraft();
     if(state.view==='intel')return renderIntel();
     if(state.view==='weather')return renderWeather();
@@ -206,7 +205,7 @@
     const shown=all.filter(matches);
     const targeted=all.filter(p=>p.user_target).length;
     const gap=firstCatalogGap(all);
-    $('pageMeta').textContent=`${shown.length} Yahoo players shown · ${targeted} targeted · Tier 1 is Yahoo #1-12`;
+    $('pageMeta').textContent=`${shown.length} Yahoo players shown · ${targeted} starred · 15 rounds · 12 picks per round`;
     if(!all.length){$('content').innerHTML='<div class="empty">No Yahoo players synced yet.</div>';return}
     if(gap){
       $('content').innerHTML=`<div class="catalog-error"><b>YAHOO CATALOG INCOMPLETE</b><span>Yahoo rank #${gap} is missing. The Draft board is intentionally hidden until the complete Yahoo Player List sync succeeds.</span></div>`;
@@ -217,18 +216,18 @@
       const start=i*12+1,end=start+11;
       return shown.filter(p=>Number(p.yahoo_rank)>=start&&Number(p.yahoo_rank)<=end);
     });
-    const late=shown.filter(p=>Number(p.yahoo_rank)>144||!Number.isFinite(Number(p.yahoo_rank)));
+    const late=shown.filter(p=>Number(p.yahoo_rank)>180||!Number.isFinite(Number(p.yahoo_rank)));
 
     $('content').innerHTML=`
-      <div class="draft-summary"><div><span>YAHOO PLAYERS</span><b>${all.length}</b></div><div><span>TARGETED</span><b>${targeted}</b></div><div><span>TIERS</span><b>${TIER_COUNT}</b></div><div><span>ORDER</span><b>YAHOO</b></div></div>
+      <div class="draft-summary"><div><span>YAHOO PLAYERS</span><b>${all.length}</b></div><div><span>STARRED</span><b>${targeted}</b></div><div><span>ROUNDS</span><b>${TIER_COUNT}</b></div><div><span>ORDER</span><b>YAHOO</b></div></div>
       <div class="tier-grid">${tiers.map((g,i)=>tier(i+1,g)).join('')}</div>
-      ${late.length?`<section class="late-pool"><div class="late-pool-head"><b>LATE POOL</b><span>Yahoo #145+ · ${late.length} players</span></div><div class="late-grid">${late.map(draftRow).join('')}</div></section>`:''}`;
+      ${late.length?`<section class="late-pool"><div class="late-pool-head"><b>LATE POOL</b><span>Yahoo #181+ · ${late.length} players</span></div><div class="late-grid">${late.map(draftRow).join('')}</div></section>`:''}`;
     bindTargets();
   }
 
   function tier(n,a){
     const start=(n-1)*12+1,end=start+11;
-    return `<section class="tier"><div class="tier-head"><b>TIER ${n}</b><span>Yahoo #${start}-${end} · ${a.length}</span></div>${a.map(draftRow).join('')}</section>`;
+    return `<section class="tier"><div class="tier-head"><b>ROUND ${n}</b><span>Yahoo #${start}-${end} · ${a.length}</span></div>${a.map(draftRow).join('')}</section>`;
   }
 
   function draftRow(p){
