@@ -5,8 +5,8 @@
   const POSITIONS = ['RB','WR','TE','QB'];
 
   // Manual study guide only. No Supabase, no live board, no extension.
-  // Approved pool = Justin's explicit targets + positive Intel + expert-only additions.
-  // Stars mark Justin's explicit targets. AVOID/disliked players are excluded.
+  // Approved pool = explicit targets + positive current Intel + expert additions.
+  // Tier = current 12-player Yahoo tier. Tabs are pick-aware inside each tier.
   const PLAYERS = [
     [1,'Jahmyr Gibbs','RB','TARGET'],[2,'Bijan Robinson','RB','TARGET'],[3,"Ja'Marr Chase",'WR','TARGET'],[4,'Puka Nacua','WR','TARGET'],[5,'Jonathan Taylor','RB','TARGET'],[6,'Christian McCaffrey','RB','INTEL'],[7,'Amon-Ra St. Brown','WR','TARGET'],[8,'Jaxon Smith-Njigba','WR','TARGET'],[9,'James Cook','RB','TARGET'],[10,'Saquon Barkley','RB','INTEL'],[11,'CeeDee Lamb','WR','TARGET'],[12,'Kenneth Walker III','RB','INTEL'],
     [13,'Justin Jefferson','WR','TARGET'],[14,'Chase Brown','RB','TARGET'],[15,"De'Von Achane",'RB','INTEL'],[17,'Derrick Henry','RB','EXPERT'],[18,'Nico Collins','WR','TARGET'],[19,'Brock Bowers','TE','TARGET'],[20,'Drake London','WR','TARGET'],[23,'George Pickens','WR','TARGET'],[24,'Malik Nabers','WR','TARGET'],
@@ -25,107 +25,157 @@
   ].map(([rank,name,pos,source]) => ({rank,name,pos,source,tier:Math.ceil(rank/12)}));
 
   const SLOT_PROFILES = {
-    1:['Elite RB anchor, then survive the long turn.','Boone philosophy: account for the RB cliff before it happens. Start with elite workload and use the 2/3 turn to rebuild WR depth.','Preferred opening shape: RB / WR / WR.'],
-    2:['Same elite-RB advantage as Pick 1.','Take the elite back if available, then let the board bring WR value back to you.','Preferred opening shape: RB / WR / WR.'],
-    3:['The classic Boone decision point.','Rankings are a guide, not a script. If the RB cliff is coming before your next pick, reaching slightly for the last elite-volume back is justified.','Preferred opening shape: RB-WR-WR or WR-RB-WR.'],
-    4:['Elite WR territory, but keep one eye on RB scarcity.','Take the best elite WR/RB value, then make sure you secure a meaningful RB before the dependable volume evaporates.','Preferred opening shape: WR / RB / WR.'],
-    5:['Middle-slot flexibility.','Do not force a build. Take the elite value, then stay balanced across RB and WR.','Preferred opening shape: WR-RB-WR or RB-WR-WR.'],
-    6:['Middle-board flexibility with manageable waits.','Boone mentality: stay value-conscious, but do not ignore the RB cliff just because the board looks balanced.','By Round 5: aim for at least 2 RB and 2 WR.'],
-    7:['Hammer spot.','This is a great place to pair an elite WR/RB with the strong Round 2 running-back tier.','Preferred opening shape: WR-RB-WR or RB-WR-WR.'],
-    8:['Respect the Round 2 RB tier.','If a Chase Brown/Achane/Henry type survives to you, that is exactly the kind of value Boone wants attacked.','Preferred opening shape: RB-WR-WR or WR-RB-WR.'],
-    9:['Back-half value.','Exploit whichever side of RB/WR the room gives you, but avoid leaving Round 2 without a real RB unless the WR value is exceptional.','Preferred opening shape: RB-WR-WR or WR-RB-WR.'],
-    10:['Think in pairs.','Treat the turn as one decision. Small ADP reaches are acceptable because the player may not survive the long wait back.','Preferred turn: RB + WR; RB + RB if the tier falls.'],
-    11:['Use the turn to create an edge.','Take the best cornerstone and be willing to use the second pick on elite TE value if it creates a real positional advantage.','Preferred turn: WR/RB + RB/WR; elite TE may replace one side.'],
-    12:['Two picks together.','Do not obsess over ADP. Take the two cornerstone players you would hate to lose before the 22-pick wait.','Preferred turn: WR + RB or RB + RB.']
+    1:['Front of every tier.','Boone philosophy: use the advantage of picking first in a tier. Take the premium player, then plan for the long wait before your next turn.','Do not assume a back-of-tier player will make it all the way around.'],
+    2:['Near the front of every tier.','You can still attack premium tier values, but the next wait is long. Boone’s RB-cliff thinking matters more here than strict ADP.','Build RB/WR foundation first; QB/TE only when value is obvious.'],
+    3:['Boone decision point.','Rankings are a guide, not a script. If the RB tier will be gone before your next selection, reaching slightly for the last strong-volume back is justified.','Preferred opening shape: RB-WR-WR or WR-RB-WR.'],
+    4:['Early-middle of every tier.','Take the best value in your part of the tier and keep one eye on RB scarcity before the board comes back.','Avoid forcing a position just because of roster construction.'],
+    5:['Middle-slot flexibility.','This slot gives you enough access to both sides of most tiers. Boone mentality: stay flexible while respecting the RB drop-offs.','Preferred opening shape: balanced RB/WR.'],
+    6:['Middle of every tier.','Use the board. If RB dries up before your next pick, act now; if not, take the stronger WR/TE value.','By Round 5, aim for a solid RB/WR core.'],
+    7:['Hammer spot.','This is a great place to pair a first-round cornerstone with the strong Round 2 RB pocket.','Round 2 RB value matters here.'],
+    8:['Back half of each tier.','Boone philosophy: you are closer to the turn, so slight reaches for players you will not see again are acceptable.','Do not wait for ADP permission if your guy will be gone.'],
+    9:['Back-half value.','Exploit falling players, but assume the very front of each tier is normally gone by your pick.','Prioritize realistic survivors, not wish-list names.'],
+    10:['Think in pairs.','Your picks are close to the turn. Treat consecutive selections as one roster-building decision and accept small reaches.','RB + WR is the default early shape.'],
+    11:['Turn leverage.','You are almost drafting in pairs. Take the best realistic survivor, then use the second pick to attack scarcity or positional edge.','Elite TE can be a legitimate turn play.'],
+    12:['The turn.','The first 11 players of a tier are usually gone. Your normal list starts at the BACK of that tier and spills into the next one.','Do not show yourself Gibbs at 1.12. Take the best realistic survivor plus the best early-next-tier player.']
   };
 
   const ROUND_PLAN = {
-    1:{label:'CORNERSTONE',priority:['RB','WR'],modes:{RB:'PRIMARY',WR:'PRIMARY',TE:'WAIT',QB:'WAIT'},note:'Elite RB/WR only. Boone: rankings are a guide, and RB scarcity should influence whether you reach slightly.',expert:'Account for the coming RB cliff instead of blindly following rankings.'},
-    2:{label:'HAMMER RB VALUE',priority:['RB','WR','TE'],modes:{RB:'PRIMARY',WR:'FALLBACK',TE:'ELITE VALUE',QB:'WAIT'},note:'This is the strongest early RB pocket. Attack it regardless of your Round 1 direction unless WR/TE value is clearly better.',expert:'Boone called Brown, Walker, Achane, Henry and the surrounding backs strong Round 2 selections.'},
-    3:{label:'LEAN WR / VALUE ONLY',priority:['WR','RB','TE'],modes:{RB:'VALUE ONLY',WR:'PRIMARY',TE:'ELITE FALL',QB:'WAIT'},note:'The RBs are riskier now. Prefer WR unless a trustworthy volume back or elite TE fall creates obvious value.',expert:'Boone noted most managers chose WR here because the RBs after the top 12 carry more risk.'},
-    4:{label:'WR / ELITE TE',priority:['WR','TE','RB'],modes:{RB:'VALUE ONLY',WR:'PRIMARY',TE:'PRIMARY',QB:'WAIT'},note:'Do not force a bad RB. Boone himself spent up on elite-TE upside when the RB value was not there.',expert:'Boone passed on weak RB value and used the round to chase elite TE upside.'},
-    5:{label:'LAST STRONG RB WINDOW',priority:['RB','WR','TE'],modes:{RB:'PRIMARY',WR:'PRIMARY',TE:'VALUE',QB:'WAIT'},note:'This is often the last train for dependable RB volume plus upside. WR remains a frequent Boone target here.',expert:'Boone says Round 5 is often the final strong window for guaranteed RB volume.'},
-    6:{label:'CORE FIRST, THEN QB/TE',priority:['RB','WR','TE','QB'],modes:{RB:'VALUE',WR:'PRIMARY',TE:'VALUE',QB:'IF CORE BUILT'},note:'If your RB/WR core is built, QB or TE becomes guilt-free. If not, keep filling the core.',expert:'Boone: balanced builds can dip into QB/TE once the foundation is secure; RB talent is thinning.'},
-    7:{label:'FILL STARTERS',priority:['RB','WR','QB','TE'],modes:{RB:'VALUE',WR:'PRIMARY',TE:'VALUE',QB:'IF CORE BUILT'},note:'Keep filling starters and take the best upside value. Do not draft a mediocre player merely to fill a position.',expert:'Stay flexible; the board should decide whether you use this pick on depth or your first QB/TE.'},
-    8:{label:'GET YOUR GUYS',priority:['RB','WR','TE','QB'],modes:{RB:'UPSIDE',WR:'UPSIDE',TE:'VALUE',QB:'VALUE'},note:'Boone calls this “Get Your Guys” territory. Take players you believe can vastly outperform the slot.',expert:'Round 8 is where conviction and upside matter more than tiny ADP differences.'},
-    9:{label:'BACKUP RB / QB VALUE',priority:['RB','QB','WR','TE'],modes:{RB:'UPSIDE',WR:'VALUE',TE:'VALUE',QB:'VALUE'},note:'Target contingent RB upside and start taking the late-QB discounts the room gives you.',expert:'Boone highlighted the value of later QBs compared with paying the Round 3 price for an elite passer.'},
-    10:{label:'LATE-QB SWEET SPOT',priority:['QB','RB','WR','TE'],modes:{RB:'UPSIDE',WR:'VALUE',TE:'VALUE',QB:'PRIMARY'},note:'If you waited on QB, this is where the plan should pay. Otherwise keep taking upside at RB/WR.',expert:'Boone/Harmon explicitly like the late-round QB attack because strong starters remain available here.'},
-    11:{label:'BENCH UPSIDE',priority:['RB','WR','QB','TE'],modes:{RB:'UPSIDE',WR:'UPSIDE',TE:'VALUE',QB:'VALUE'},note:'Use bench spots on players whose role can grow. Floor-only depth is less useful than contingent upside.',expert:'Start prioritizing paths to a larger role over safe low-ceiling veterans.'},
-    12:{label:'HANDCUFF / STACK VALUE',priority:['RB','WR','QB','TE'],modes:{RB:'UPSIDE',WR:'UPSIDE',TE:'VALUE',QB:'VALUE'},note:'Target contingency backs, cheap stacks and late breakouts.',expert:'At this point the best picks are players one role change away from major relevance.'},
-    13:{label:'LOTTERY TICKETS',priority:['RB','WR','TE','QB'],modes:{RB:'UPSIDE',WR:'UPSIDE',TE:'VALUE',QB:'VALUE'},note:'Keep chasing upside. Do not spend the pick on defense yet unless your skill-player board is exhausted.',expert:'Boone wants late picks used on players who can actually become league-winning assets.'},
-    14:{label:'LAST SKILL / DEF',priority:['RB','WR','TE','DEF'],modes:{RB:'UPSIDE',WR:'UPSIDE',TE:'VALUE',QB:'WAIT'},note:'One last upside skill player is fine. Defense only enters the conversation now.',expert:'Boone: do not draft defense early.'},
-    15:{label:'DEF / KICKER LAST',priority:['DEF','K'],modes:{RB:'WAIT',WR:'WAIT',TE:'WAIT',QB:'WAIT'},note:'Defense and kicker belong at the end. Do not sacrifice earlier upside picks for them.',expert:'Boone’s final-draft rule: DEF and K in the final two rounds only.'}
+    1:{label:'CORNERSTONE',priority:['RB','WR'],modes:{RB:'PRIMARY',WR:'PRIMARY',TE:'WAIT',QB:'WAIT'},note:'Elite RB/WR only. Boone: rankings are a guide, and RB scarcity should affect the decision.',expert:'Build around the best realistic survivor in your part of Tier 1.'},
+    2:{label:'HAMMER RB VALUE',priority:['RB','WR','TE'],modes:{RB:'PRIMARY',WR:'FALLBACK',TE:'ELITE VALUE',QB:'WAIT'},note:'Boone sees this as the strongest early RB pocket. Attack RB unless a clearly better WR/elite-TE value falls.',expert:'Round 2 is the time to beat the RB cliff, not chase a back after it.'},
+    3:{label:'LEAN WR / VALUE ONLY',priority:['WR','RB','TE'],modes:{RB:'VALUE ONLY',WR:'PRIMARY',TE:'ELITE FALL',QB:'WAIT'},note:'The RBs get riskier. Prefer WR unless a trustworthy volume back or elite TE falls.',expert:'Boone’s expert room leaned WR here because the RB quality became shakier.'},
+    4:{label:'WR / ELITE TE',priority:['WR','TE','RB'],modes:{RB:'VALUE ONLY',WR:'PRIMARY',TE:'PRIMARY',QB:'WAIT'},note:'Do not force a bad RB. Elite-TE upside is worth considering when the RB value is not there.',expert:'This is where roster value matters more than blindly filling a position.'},
+    5:{label:'LAST STRONG RB WINDOW',priority:['RB','WR','TE'],modes:{RB:'PRIMARY',WR:'PRIMARY',TE:'VALUE',QB:'WAIT'},note:'Often the last strong window for dependable RB volume plus upside.',expert:'Boone treats Round 5 as a major RB decision point.'},
+    6:{label:'CORE FIRST, THEN QB/TE',priority:['RB','WR','TE','QB'],modes:{RB:'VALUE',WR:'PRIMARY',TE:'VALUE',QB:'IF CORE BUILT'},note:'If your RB/WR core is built, QB or TE becomes guilt-free. If not, keep filling the core.',expert:'Do not take QB merely because the round number says so.'},
+    7:{label:'FILL STARTERS',priority:['RB','WR','QB','TE'],modes:{RB:'VALUE',WR:'PRIMARY',TE:'VALUE',QB:'IF CORE BUILT'},note:'Keep filling starters and take the best upside value.',expert:'Stay flexible; the board decides whether this becomes QB/TE or more RB/WR.'},
+    8:{label:'GET YOUR GUYS',priority:['RB','WR','TE','QB'],modes:{RB:'UPSIDE',WR:'UPSIDE',TE:'VALUE',QB:'VALUE'},note:'Boone “Get Your Guys” territory. Take players you believe can beat the slot.',expert:'Conviction matters more than tiny ADP differences here.'},
+    9:{label:'BACKUP RB / QB VALUE',priority:['RB','QB','WR','TE'],modes:{RB:'UPSIDE',WR:'VALUE',TE:'VALUE',QB:'VALUE'},note:'Target contingent RB upside and late-QB discounts.',expert:'This is where waiting on QB can start paying off.'},
+    10:{label:'LATE-QB SWEET SPOT',priority:['QB','RB','WR','TE'],modes:{RB:'UPSIDE',WR:'VALUE',TE:'VALUE',QB:'PRIMARY'},note:'If you waited on QB, this is a strong place to attack.',expert:'Otherwise keep taking RB/WR upside.'},
+    11:{label:'BENCH UPSIDE',priority:['RB','WR','QB','TE'],modes:{RB:'UPSIDE',WR:'UPSIDE',TE:'VALUE',QB:'VALUE'},note:'Use bench spots on players whose roles can grow.',expert:'Upside over safe low-ceiling depth.'},
+    12:{label:'HANDCUFF / STACK VALUE',priority:['RB','WR','QB','TE'],modes:{RB:'UPSIDE',WR:'UPSIDE',TE:'VALUE',QB:'VALUE'},note:'Target contingency backs, cheap stacks and late breakouts.',expert:'One role change can make these picks matter.'},
+    13:{label:'LOTTERY TICKETS',priority:['RB','WR','TE','QB'],modes:{RB:'UPSIDE',WR:'UPSIDE',TE:'VALUE',QB:'VALUE'},note:'Keep chasing upside. Do not spend the pick on defense yet unless skill value is exhausted.',expert:'Late picks should have a path to becoming useful.'},
+    14:{label:'LAST SKILL / DEF',priority:['RB','WR','TE','DEF'],modes:{RB:'UPSIDE',WR:'UPSIDE',TE:'VALUE',QB:'WAIT'},note:'One last upside skill player is fine. Defense only enters now.',expert:'Do not draft defense early.'},
+    15:{label:'DEF / KICKER LAST',priority:['DEF','K'],modes:{RB:'WAIT',WR:'WAIT',TE:'WAIT',QB:'WAIT'},note:'Defense and kicker belong at the end.',expert:'Do not sacrifice earlier upside picks for them.'}
   };
 
+  // Deliberate conditional repeats: these are FALL alerts, not normal round options.
   const FALL_TRIGGERS = {
-    3:[{name:'Brock Bowers',text:'AUTO-TAKE IF HE REACHES ROUND 3 — elite TE value has fallen too far.'}],
-    4:[{name:'Trey McBride',text:'AUTO-TAKE IF HE REACHES ROUND 4 — this is the value point to stop waiting.'}]
+    3:[{name:'Brock Bowers',text:'IF BROCK BOWERS SURVIVES TO YOUR ROUND 3 PICK → TAKE HIM. He has fallen past his normal elite-TE window.'}],
+    4:[{name:'Trey McBride',text:'IF TREY McBRIDE SURVIVES TO YOUR ROUND 4 PICK → TAKE HIM. This is the value point to stop waiting.'}]
   };
 
   const SOURCE_ORDER = {TARGET:0,INTEL:1,EXPERT:2};
   const overallPick = (slot,round) => round % 2 ? ((round-1)*12+slot) : (round*12-slot+1);
-  const byName = name => PLAYERS.find(p=>p.name===name);
-  const tierPlayers = round => PLAYERS.filter(p=>p.tier===round);
+  const esc = v => String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
-  function optionsFor(round,pos,overall){
+  function availabilityWindow(overall,round){
+    // Early rounds are tighter. Later rounds allow more ADP variance.
+    const fall = round <= 4 ? 3 : round <= 8 ? 5 : 8;
+    const reach = round <= 4 ? 10 : round <= 8 ? 13 : 18;
+    return {min:Math.max(1,overall-fall),max:overall+reach};
+  }
+
+  function availabilityLabel(rank,overall){
+    const delta = rank-overall;
+    if(delta < -1) return 'IF STILL THERE';
+    if(delta <= 3) return 'RIGHT IN RANGE';
+    if(delta <= 8) return 'REALISTIC';
+    return 'SMALL REACH';
+  }
+
+  function candidatesFor(round,pos,overall,used){
     const mode = ROUND_PLAN[round].modes[pos] || 'WAIT';
     if(mode==='WAIT') return {mode,options:[]};
-    const options = tierPlayers(round)
-      .filter(p=>p.pos===pos)
-      .sort((a,b)=>(SOURCE_ORDER[a.source]-SOURCE_ORDER[b.source]) || (a.rank-b.rank))
-      .slice(0,2)
-      .map(p=>({
-        ...p,
-        status: p.rank <= overall-5 ? 'IF STILL THERE' : p.rank >= overall+6 ? 'SLIGHT REACH' : 'IN RANGE'
-      }));
-    return {mode,options};
+
+    const {min,max}=availabilityWindow(overall,round);
+    let candidates = PLAYERS.filter(p =>
+      p.pos===pos &&
+      !used.has(p.name) &&
+      p.rank>=min && p.rank<=max
+    );
+
+    // Stay centered on the exact snake pick, then prefer Justin targets, then Intel/expert adds.
+    candidates = candidates.sort((a,b)=>{
+      const da=Math.abs(a.rank-overall), db=Math.abs(b.rank-overall);
+      return da-db || (SOURCE_ORDER[a.source]-SOURCE_ORDER[b.source]) || a.rank-b.rank;
+    });
+
+    // If one position is thin, allow the very front of the next tier — never recycle an earlier-round name.
+    if(candidates.length<2){
+      const expandedMax=max+6;
+      const extras=PLAYERS.filter(p=>
+        p.pos===pos && !used.has(p.name) && p.rank>max && p.rank<=expandedMax &&
+        !candidates.some(x=>x.name===p.name)
+      ).sort((a,b)=>(SOURCE_ORDER[a.source]-SOURCE_ORDER[b.source]) || a.rank-b.rank);
+      candidates=candidates.concat(extras);
+    }
+
+    return {
+      mode,
+      options:candidates.slice(0,2).map(p=>({...p,status:availabilityLabel(p.rank,overall)}))
+    };
   }
 
   function playerRow(p){
-    const star = p.source==='TARGET' ? '★ ' : '';
-    return `<div class="position-option"><div class="position-name">${star}${p.name}</div><div class="position-meta">Y#${p.rank} · ${p.status}${p.source!=='TARGET'?` · ${p.source}`:''}</div></div>`;
+    const star=p.source==='TARGET'?'★ ':'';
+    const source=p.source==='TARGET'?'YOUR TARGET':p.source==='INTEL'?'INTEL':'EXPERT';
+    return `<div class="position-option"><div class="position-name">${star}${esc(p.name)}</div><div class="position-meta">Y#${p.rank} · ${esc(p.status)} · ${source}</div></div>`;
   }
 
-  function positionBox(round,pos,overall){
-    const {mode,options} = optionsFor(round,pos,overall);
+  function positionBox(round,pos,overall,result){
+    const {mode,options}=result;
     if(mode==='WAIT') return `<section class="position-box wait"><div class="position-title"><b>${pos}</b><span>WAIT</span></div><div class="wait-text">Boone build says do not spend this round here.</div></section>`;
-    const body = options.length ? options.map(playerRow).join('') : `<div class="wait-text">No approved ${pos} in this tier — do not force the position.</div>`;
-    return `<section class="position-box"><div class="position-title"><b>${pos}</b><span>${mode}</span></div>${body}</section>`;
+    const body=options.length?options.map(playerRow).join(''):`<div class="wait-text">No approved ${pos} fits this exact pick window — do not force it.</div>`;
+    return `<section class="position-box"><div class="position-title"><b>${pos}</b><span>${esc(mode)}</span></div>${body}</section>`;
   }
 
   function triggerBlock(round){
-    const triggers = FALL_TRIGGERS[round] || [];
-    if(!triggers.length) return '';
-    return `<div class="fall-triggers">${triggers.map(t=>{const p=byName(t.name);return `<div class="fall-trigger"><b>${t.name}${p&&p.source==='TARGET'?' ★':''}</b><span>${t.text}</span></div>`}).join('')}</div>`;
+    const triggers=FALL_TRIGGERS[round]||[];
+    if(!triggers.length)return '';
+    return `<div class="fall-triggers">${triggers.map(t=>`<div class="fall-trigger">${esc(t.text)}</div>`).join('')}</div>`;
   }
 
   function render(slot){
     document.querySelectorAll('#slotTabs button').forEach(b=>b.classList.toggle('active',Number(b.dataset.slot)===slot));
-    const [headline,approach,build] = SLOT_PROFILES[slot];
-    $('slotTitle').textContent = `PICK ${slot}`;
-    $('slotHeadline').textContent = headline;
-    $('slotApproach').textContent = approach;
-    $('slotBuild').textContent = build;
+    const [headline,approach,build]=SLOT_PROFILES[slot];
+    $('slotTitle').textContent=`PICK ${slot}`;
+    $('slotHeadline').textContent=headline;
+    $('slotApproach').textContent=approach;
+    $('slotBuild').textContent=build;
 
-    $('rounds').innerHTML = Array.from({length:15},(_,i)=>{
-      const round=i+1;
+    // Prevent normal recommendations from being copied into later rounds on the same tab.
+    const used=new Set();
+    const cards=[];
+
+    for(let round=1;round<=15;round++){
       const overall=overallPick(slot,round);
       const plan=ROUND_PLAN[round];
-      const groups = round===15
-        ? `<section class="position-box"><div class="position-title"><b>DEF</b><span>PRIMARY</span></div><div class="position-option"><div class="position-name">Rams D/ST</div><div class="position-meta">Only now — or take your preferred final defense</div></div></section><section class="position-box"><div class="position-title"><b>K</b><span>FINAL PICK</span></div><div class="wait-text">Use the final pick for kicker. Do not spend an earlier pick here.</div></section>`
-        : POSITIONS.map(pos=>positionBox(round,pos,overall)).join('');
-      return `<article class="round-card">
-        <div class="round-head"><b>ROUND ${round}</b><span>Your pick ≈ #${overall}<br>${plan.label}</span></div>
+      const results={};
+
+      for(const pos of POSITIONS){
+        results[pos]=candidatesFor(round,pos,overall,used);
+      }
+
+      // Once a player was presented as a normal option in this earlier round, do not recycle him later.
+      Object.values(results).forEach(r=>r.options.forEach(p=>used.add(p.name)));
+
+      const positionOrder=plan.priority.filter(p=>POSITIONS.includes(p));
+      const remaining=POSITIONS.filter(p=>!positionOrder.includes(p));
+      const allPositions=[...positionOrder,...remaining];
+
+      cards.push(`<article class="round-card">
+        <div class="round-head"><b>ROUND ${round}</b><span>Your snake pick ≈ #${overall}<br>Tier ${round} · ${esc(plan.label)}</span></div>
         <div class="focus">BOONE PRIORITY: ${plan.priority.join(' → ')}</div>
         ${triggerBlock(round)}
-        <div class="position-grid">${groups}</div>
-        <div class="round-note">${plan.note}</div>
-        <div class="expert-note">${plan.expert}</div>
-      </article>`;
-    }).join('');
+        <div class="position-grid">${allPositions.map(pos=>positionBox(round,pos,overall,results[pos])).join('')}</div>
+        <div class="round-note">${esc(plan.note)}</div>
+        <div class="expert-note">${esc(plan.expert)}</div>
+      </article>`);
+    }
+
+    $('rounds').innerHTML=cards.join('');
   }
 
-  $('slotTabs').innerHTML = Array.from({length:12},(_,i)=>`<button data-slot="${i+1}">PICK ${i+1}</button>`).join('');
-  $('slotTabs').querySelectorAll('button').forEach(b=>b.onclick=()=>render(Number(b.dataset.slot)));
+  $('slotTabs').innerHTML=Array.from({length:12},(_,i)=>`<button type="button" data-slot="${i+1}">PICK ${i+1}</button>`).join('');
+  $('slotTabs').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>render(Number(b.dataset.slot))));
   render(7);
 })();
