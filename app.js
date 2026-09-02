@@ -105,8 +105,9 @@
   function renderPlayers(targetOnly){
     const a=filteredPlayers(targetOnly);
     $('viewMeta').textContent=targetOnly?`${a.length} starred targets`:`${a.length} Yahoo players`;
-    $('content').innerHTML=`<div class="list-stack">${a.map(playerCard).join('')||'<div class="empty">No players match.</div>'}</div>`;
+    $('content').innerHTML=`${targetOnly?'':`<div class="player-actions"><button type="button" class="add-player-button" id="addMissingPlayerButton">+ ADD MISSING YAHOO PLAYER</button></div>`}<div class="list-stack">${a.map(playerCard).join('')||'<div class="empty">No players match.</div>'}</div>`;
     bindStars();
+    if(!targetOnly) $('addMissingPlayerButton')?.addEventListener('click',openPlayerModal);
   }
 
   function playerCard(p){
@@ -160,10 +161,28 @@
   function closeKey(){$('keyModal').hidden=true;}
   function saveKey(){const v=$('keyInput').value.trim();if(v)localStorage.setItem(APP_KEY_STORAGE,v);closeKey();}
 
+  function openPlayerModal(){
+    const token=localStorage.getItem(APP_KEY_STORAGE); if(!token){openKey();return;}
+    $('manualName').value=''; $('manualTeam').value=''; $('manualPosition').value='RB'; $('manualRank').value='';
+    $('playerModal').hidden=false; setTimeout(()=>$('manualName').focus(),0);
+  }
+  function closePlayerModal(){$('playerModal').hidden=true;}
+  async function saveManualPlayer(){
+    const token=localStorage.getItem(APP_KEY_STORAGE); if(!token){closePlayerModal();openKey();return;}
+    const name=$('manualName').value.trim(), team=$('manualTeam').value.trim().toUpperCase(), position=$('manualPosition').value, rank=Number($('manualRank').value);
+    if(!name || !Number.isInteger(rank) || rank<1){window.alert('Enter the Yahoo player name and Yahoo rank.');return;}
+    try{
+      await api('rpc/mobile_add_player',{method:'POST',body:JSON.stringify({p_token:token,p_name:name,p_team:team,p_position:position,p_yahoo_rank:rank,p_target:true})});
+      closePlayerModal(); await load();
+    }catch(e){window.alert('Could not add player: '+(e?.message||'unknown error'));}
+  }
+
   $('search').oninput=e=>{S.q=e.target.value.trim().toLowerCase();renderView();};
   document.querySelectorAll('.nav-inner button').forEach(b=>b.onclick=()=>{S.view=b.dataset.view;S.pos='ALL';render();scrollTo({top:0,behavior:'smooth'});});
   $('keyButton').onclick=openKey; $('saveKeyButton').onclick=saveKey; document.querySelectorAll('[data-close-modal]').forEach(x=>x.onclick=closeKey);
   $('keyInput').onkeydown=e=>{if(e.key==='Enter')saveKey();if(e.key==='Escape')closeKey();};
+  $('savePlayerButton').onclick=saveManualPlayer; document.querySelectorAll('[data-close-player-modal]').forEach(x=>x.onclick=closePlayerModal);
+  $('manualRank').onkeydown=e=>{if(e.key==='Enter')saveManualPlayer();if(e.key==='Escape')closePlayerModal();};
 
   load(); setInterval(load,REFRESH_MS);
 })();
