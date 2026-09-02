@@ -6,7 +6,8 @@
   const H={apikey:KEY,Authorization:`Bearer ${KEY}`,'Content-Type':'application/json'};
   const APP_KEY='fantasyFootball2026AppKey';
   const TIER_COUNT=15;
-  const POSITIONS=['ALL','QB','RB','WR','TE','DEF','K'];
+  const FILTERS=['ALL','QB','RB','WR','TE','DEF','K','STARRED','INTEL','INJURY'];
+  const POSITION_FILTERS=new Set(['QB','RB','WR','TE','DEF','K']);
   const FILTER_VIEWS=new Set(['players','draft','cowbell','injuries']);
   const state={view:'draft',pos:'ALL',q:'',players:[],intel:[],weather:[],owner:[],suggestions:[],errors:[]};
   const $=id=>document.getElementById(id);
@@ -45,8 +46,27 @@
     return m;
   }
 
+  function tags(p){
+    const intel=p.intel_items||[];
+    return uniq([
+      ...(p.user_tags||[]),
+      ...(p.planner_tags||[]),
+      ...intel.flatMap(i=>[...(i.draft_tags||[]),i.action]),
+      p.user_target?'TARGET':null
+    ]);
+  }
+
+  function isInjuryPlayer(p){
+    const injury=/injur|questionable|doubtful|limited|practice|pup|\bir\b|hamstring|knee|ankle|heel|concussion|shoulder|groin/i;
+    const intel=p.intel_items||[];
+    return tags(p).some(t=>/INJUR/.test(t))||intel.some(i=>injury.test(`${i.action||''} ${i.status||''} ${i.what_changed||''} ${i.recommendation||''} ${(i.draft_tags||[]).join(' ')}`));
+  }
+
   function matches(p){
-    if(state.pos!=='ALL'&&normPos(p.position)!==state.pos)return false;
+    if(POSITION_FILTERS.has(state.pos)&&normPos(p.position)!==state.pos)return false;
+    if(state.pos==='STARRED'&&!p.user_target)return false;
+    if(state.pos==='INTEL'&&!(p.intel_items||[]).length)return false;
+    if(state.pos==='INJURY'&&!isInjuryPlayer(p))return false;
     if(!state.q)return true;
     const intel=p.intel_items||[];
     const suggestions=p.suggestions||[];
@@ -56,16 +76,6 @@
       ...intel.flatMap(i=>[i.action,i.priority,i.status,i.what_changed,i.recommendation,...(i.draft_tags||[])]),
       ...suggestions.flatMap(s=>[s.suggestion_type,s.sentiment,s.note,s.source_context,s.source_name,s.suggested_round])
     ].join(' ').toLowerCase().includes(state.q);
-  }
-
-  function tags(p){
-    const intel=p.intel_items||[];
-    return uniq([
-      ...(p.user_tags||[]),
-      ...(p.planner_tags||[]),
-      ...intel.flatMap(i=>[...(i.draft_tags||[]),i.action]),
-      p.user_target?'TARGET':null
-    ]);
   }
 
   async function load(){
@@ -130,7 +140,7 @@
   }
 
   function renderFilters(){
-    const a=FILTER_VIEWS.has(state.view)?POSITIONS:['ALL'];
+    const a=FILTER_VIEWS.has(state.view)?FILTERS:['ALL'];
     $('positionFilters').innerHTML=a.map(p=>`<button class="${state.pos===p?'active':''}" data-pos="${p}">${p}</button>`).join('');
     $('positionFilters').querySelectorAll('button').forEach(b=>b.onclick=()=>{state.pos=b.dataset.pos;renderFilters();renderView()});
   }
@@ -167,8 +177,8 @@
 
   function renderPlayers(targetOnly){
     const a=visiblePlayers(targetOnly);
-    $('pageMeta').textContent=targetOnly?`${a.length} targeted players`:`${a.length} Yahoo Player List rows`;
-    $('content').innerHTML=`${targetOnly?'':`<div class="player-toolbar"><span class="source-badge">Yahoo list + current player intelligence</span><button id="addMissing" class="add-missing">+ ADD MISSING YAHOO PLAYER</button></div>`}<div class="list">${a.map(playerCard).join('')||'<div class="empty">No players match.</div>'}</div>`;
+    $('pageMeta').textContent=`${a.length} canonical Yahoo players`;
+    $('content').innerHTML=`${targetOnly?'':`<div class="player-toolbar"><span class="source-badge">Same Yahoo player record used by Players + Draft + Intel</span><button id="addMissing" class="add-missing">+ ADD MISSING YAHOO PLAYER</button></div>`}<div class="list">${a.map(playerCard).join('')||'<div class="empty">No players match.</div>'}</div>`;
     bindTargets();
     if(!targetOnly)$('addMissing')?.addEventListener('click',openManual);
   }
@@ -236,15 +246,22 @@
     const context=p.planner_reason||latest?.recommendation||latest?.what_changed||'';
     return `<div class="draft-row ${po} ${p.user_target?'targeted':''}">
       <div class="draft-rank">${esc(p.yahoo_rank??'—')}</div><span class="pos ${po}">${po}</span>
-      <div class="draft-player-main"><div class="draft-name">${esc(p.yahoo_name)}</div><div class="draft-meta">${esc(p.team||'')} · Yahoo #${esc(p.yahoo_rank??'—')}</div>${ts.length?`<div class="tags">${ts.slice(0,5).map(t=>`<span class="tag ${tagClass(t)}">${esc(t)}</span>`).join('')}</div>`:''}${context?`<div class="draft-intel">${esc(context)}</div>`:''}</div>
+      <div class="draft-player-main"><div class="draft-name">${esc(p.yahoo_name||p.display_name)}</div><div class="draft-meta">${esc(p.team||'')} · Yahoo #${esc(p.yahoo_rank??'—')}</div>${ts.length?`<div class="tags">${ts.slice(0,5).map(t=>`<span class="tag ${tagClass(t)}">${esc(t)}</span>`).join('')}</div>`:''}${context?`<div class="draft-intel">${esc(context)}</div>`:''}</div>
       <button class="target-button draft-target ${p.user_target?'on':''}" data-key="${esc(p.player_key)}" data-target="${p.user_target?'false':'true'}">${p.user_target?'TARGETED':'TARGET'}</button>
     </div>`;
   }
 
   function renderIntel(){
+    const playerByName=new Map(state.players.map(p=>[normName(p.yahoo_name||p.display_name),p]));
     const a=state.intel.filter(matchGeneric).slice().sort(intelSort);
     $('pageMeta').textContent=`${a.length} current Fantasy Intel Watch items`;
-    $('content').innerHTML=`<div class="list">${a.map(x=>`<article class="intel-card"><div class="card-top"><span class="pos ${normPos(x.position)}">${normPos(x.position)}</span><span class="tag ${tagClass(x.action)}">${esc(x.action||'MONITOR')}</span></div><div class="player-name">${esc(x.player_name)}</div><div class="player-meta">${esc(x.team||'')} · ${esc(x.priority||'')} · ${x.last_checked_at?`Checked ${esc(new Date(x.last_checked_at).toLocaleString())}`:''}</div><p>${esc(x.what_changed||'')}</p>${x.recommendation?`<p><b>WHAT TO DO:</b> ${esc(x.recommendation)}</p>`:''}${x.draft_tags?.length?`<div class="tags">${x.draft_tags.map(t=>`<span class="tag ${tagClass(t)}">${esc(t)}</span>`).join('')}</div>`:''}</article>`).join('')||'<div class="empty">No current intel.</div>'}</div>`;
+    $('content').innerHTML=`<div class="list">${a.map(x=>{
+      const p=playerByName.get(normName(x.player_name));
+      const name=p?.yahoo_name||p?.display_name||x.player_name;
+      const team=p?.team||x.team||'';
+      const pos=p?.position||x.position;
+      return `<article class="intel-card"><div class="card-top"><span class="pos ${normPos(pos)}">${normPos(pos)}</span><span class="tag ${tagClass(x.action)}">${esc(x.action||'MONITOR')}</span></div><div class="player-name">${esc(name)}</div><div class="player-meta">${esc(team)} · ${esc(x.priority||'')} · ${x.last_checked_at?`Checked ${esc(new Date(x.last_checked_at).toLocaleString())}`:''}</div><p>${esc(x.what_changed||'')}</p>${x.recommendation?`<p><b>WHAT TO DO:</b> ${esc(x.recommendation)}</p>`:''}${x.draft_tags?.length?`<div class="tags">${x.draft_tags.map(t=>`<span class="tag ${tagClass(t)}">${esc(t)}</span>`).join('')}</div>`:''}</article>`;
+    }).join('')||'<div class="empty">No current intel.</div>'}</div>`;
   }
 
   function renderWeather(){
@@ -255,11 +272,10 @@
 
   function matchGeneric(x){if(!state.q)return true;return Object.values(x||{}).map(v=>String(v??'')).join(' ').toLowerCase().includes(state.q)}
   function renderTagged(type){
-    const injury=/injur|practice|pup|\bir\b/i;
     let a=state.players.filter(p=>{
-      const ts=tags(p),intel=p.intel_items||[];
+      const ts=tags(p);
       if(type==='cowbell')return ts.some(t=>/COWBELL|WORKHORSE|BELLCOW/.test(t));
-      return ts.some(t=>/INJUR|MONITOR/.test(t))||intel.some(i=>injury.test(`${i.recommendation||''} ${i.what_changed||''}`));
+      return isInjuryPlayer(p);
     });
     a=a.filter(matches).sort(sortYahoo);
     $('pageMeta').textContent=`${a.length} current players`;
