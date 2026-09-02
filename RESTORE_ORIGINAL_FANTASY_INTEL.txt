@@ -1,1 +1,0 @@
-Production rollback trigger: restore original dark Fantasy Intel prototype at the root index. 2026-09-02.
