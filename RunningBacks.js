@@ -69,7 +69,7 @@
             const tags=allTags(player);
             const context=player.planner_reason||latest.recommendation||latest.what_changed||'No material role change currently logged.';
             return `<article class="player-card position-card ${player.user_target?'targeted':''}">
-              <div class="card-top"><div class="position-role-wrap"><span class="pos RB">RB</span><span class="position-role rb-role">${esc(roleLabel(player))}</span></div><div class="position-actions"><span class="rank">Yahoo #${esc(player.yahoo_rank??'—')}</span><button class="target-button ${player.user_target?'on':''}" data-key="${esc(player.player_key)}" data-target="${player.user_target?'false':'true'}">${player.user_target?'TARGETED':'TARGET'}</button></div></div>
+              <div class="card-top"><div class="position-role-wrap"><span class="pos RB">RB</span><span class="position-role rb-role">${esc(roleLabel(player))}</span></div><div class="position-actions"><span class="tier-badge">TIER ${esc(player.tier??'—')}</span><span class="rank">Yahoo #${esc(player.yahoo_rank??'—')}</span><button class="target-button ${player.user_target?'on':''}" data-key="${esc(player.player_key)}" data-target="${player.user_target?'false':'true'}">${player.user_target?'TARGETED':'TARGET'}</button></div></div>
               <div class="position-name-line"><div class="player-name">${esc(player.yahoo_name||player.display_name)}</div><span class="team-badge">${esc(team)}</span></div>
               ${tags.length?`<div class="tags">${tags.map(tag=>`<span class="tag ${tagClass(tag)}">${esc(tag)}</span>`).join('')}</div>`:''}
               <div class="player-context position-current-read"><b>CURRENT READ:</b> ${esc(context)}</div>
