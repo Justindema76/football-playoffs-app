@@ -7,18 +7,19 @@
   const APP_KEY='fantasyFootball2026AppKey';
   const TIER_COUNT=15;
   const FILTERS=['ALL','QB','RB','WR','TE','DEF','K','STARRED','INTEL','INJURY'];
-  const RB_FILTERS=['ALL','STARRED','INTEL','INJURY'];
+  const POSITION_PANEL_FILTERS=['ALL','STARRED','INTEL','INJURY'];
   const POSITION_FILTERS=new Set(['QB','RB','WR','TE','DEF','K']);
-  const FILTER_VIEWS=new Set(['players','draft','intel','runningbacks','injuries']);
+  const FILTER_VIEWS=new Set(['players','draft','intel','runningbacks','widereceivers','injuries']);
   const state={view:'draft',pos:'ALL',q:'',players:[],intel:[],weather:[],owner:[],suggestions:[],errors:[]};
   const $=id=>document.getElementById(id);
   const intelApi=window.FantasyIntel;
   const runningBacksApi=window.FantasyRunningBacks;
+  const wideReceiversApi=window.FantasyWideReceivers;
 
-  if(!intelApi||!runningBacksApi){
+  if(!intelApi||!runningBacksApi||!wideReceiversApi){
     console.error('Feature modules failed to load.');
     const n=$('notice');
-    if(n){n.hidden=false;n.textContent='Intel or Running Backs module failed to load. Refresh the page.'}
+    if(n){n.hidden=false;n.textContent='A fantasy feature module failed to load. Refresh the page.'}
     return;
   }
 
@@ -116,7 +117,7 @@
   function render(){
     $('shell').dataset.view=state.view;
     document.querySelectorAll('.bottom-nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===state.view));
-    $('pageTitle').textContent=state.view==='runningbacks'?'RUNNING BACKS':state.view.toUpperCase();
+    $('pageTitle').textContent=state.view==='runningbacks'?'RUNNING BACKS':state.view==='widereceivers'?'WIDE RECEIVERS':state.view.toUpperCase();
     $('yahooCount').textContent=state.players.filter(p=>Number.isFinite(Number(p.yahoo_rank))).length;
     $('targetCount').textContent=state.players.filter(p=>p.user_target).length;
     $('intelCount').textContent=state.intel.length;
@@ -125,7 +126,8 @@
   }
 
   function renderFilters(){
-    const a=state.view==='runningbacks'?RB_FILTERS:(FILTER_VIEWS.has(state.view)?FILTERS:['ALL']);
+    const isPositionPanel=state.view==='runningbacks'||state.view==='widereceivers';
+    const a=isPositionPanel?POSITION_PANEL_FILTERS:(FILTER_VIEWS.has(state.view)?FILTERS:['ALL']);
     $('positionFilters').innerHTML=a.map(p=>`<button class="${state.pos===p?'active':''}" data-pos="${p}">${p}</button>`).join('');
     $('positionFilters').querySelectorAll('button').forEach(b=>b.onclick=()=>{state.pos=b.dataset.pos;renderFilters();renderView()});
   }
@@ -142,6 +144,7 @@
     if(state.view==='intel')return intelApi.render({state,$,esc,normPos,tagClass,matches});
     if(state.view==='weather')return renderWeather();
     if(state.view==='runningbacks')return runningBacksApi.render({state,$,esc,tagClass,intelApi,bindTargets});
+    if(state.view==='widereceivers')return wideReceiversApi.render({state,$,esc,tagClass,intelApi,bindTargets});
     return renderTagged();
   }
 
