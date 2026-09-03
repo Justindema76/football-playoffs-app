@@ -54,7 +54,7 @@
       groups.get(team).push(player);
     });
 
-    $('pageMeta').textContent=`${receivers.length} wide receivers · ${groups.size} teams · WR1s, WR2s, WR3s and depth`;
+    $('pageMeta').textContent=`${receivers.length} wide receivers · ${groups.size} teams · compact team view`;
     $('content').innerHTML=`<div class="wr-board">${[...groups.entries()].map(([team,players])=>`
       <section class="wr-team-section">
         <div class="wr-team-header"><span class="team-badge team-badge-large">${esc(team)}</span><b>${esc(team)} WIDE RECEIVERS</b><span>${players.length} shown</span></div>
@@ -68,8 +68,8 @@
             <div class="card-top"><div class="wr-role-wrap"><span class="pos WR">WR</span><span class="wr-role">${esc(roleLabel(index,tags))}</span></div><div class="wr-actions"><span class="rank">Yahoo #${esc(player.yahoo_rank??'—')}</span><button class="target-button ${player.user_target?'on':''}" data-key="${esc(player.player_key)}" data-target="${player.user_target?'false':'true'}">${player.user_target?'TARGETED':'TARGET'}</button></div></div>
             <div class="wr-name-line"><div class="player-name">${esc(player.yahoo_name||player.display_name)}</div><span class="team-badge">${esc(team)}</span></div>
             ${tags.length?`<div class="tags">${tags.map(tag=>`<span class="tag ${tagClass(tag)}">${esc(tag)}</span>`).join('')}</div>`:''}
-            <div class="player-context"><b>CURRENT READ:</b> ${esc(context)}</div>
-            ${intelApi.renderPlayerDetails(player,esc,tagClass)}
+            <div class="player-context wr-current-read"><b>CURRENT READ:</b> ${esc(context)}</div>
+            ${intelApi.renderPlayerDetails(player,esc,tagClass,{openSingle:false})}
           </article>`;
         }).join('')}</div>
       </section>`).join('')||'<div class="empty">No wide receivers match.</div>'}</div>`;
