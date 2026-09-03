@@ -182,25 +182,25 @@
     catch(e){localStorage.removeItem(APP_KEY);alert('Target update failed. Re-enter the app key.');openKey()}
   }
 
-  function firstCatalogGap(all){
-    const ranks=new Set(all.map(p=>Number(p.yahoo_rank)).filter(Number.isInteger));
+  function catalogGaps(all){
+    const ranks=new Set(all.map(p=>Number(p.yahoo_rank)).filter(n=>Number.isInteger(n)&&n>0));
     const maxRank=Math.max(0,...ranks);
-    if(maxRank<1)return 1;
-    for(let r=1;r<=maxRank;r++)if(!ranks.has(r))return r;
-    return null;
+    const gaps=[];
+    for(let r=1;r<=maxRank;r++)if(!ranks.has(r))gaps.push(r);
+    return gaps;
   }
 
   function renderDraft(){
     const all=state.players.slice().sort(sortYahoo);
     const shown=all.filter(matches);
     const targeted=all.filter(p=>p.user_target).length;
-    const gap=firstCatalogGap(all);
+    const gaps=catalogGaps(all);
     $('pageMeta').textContent=`${shown.length} Yahoo players shown · ${targeted} starred · 15 rounds · 12 picks per round`;
     if(!all.length){$('content').innerHTML='<div class="empty">No Yahoo players synced yet.</div>';return}
-    if(gap){$('content').innerHTML=`<div class="catalog-error"><b>YAHOO CATALOG INCOMPLETE</b><span>Yahoo rank #${gap} is missing. The Draft board is intentionally hidden until the complete Yahoo Player List sync succeeds.</span></div>`;return}
-    const tiers=Array.from({length:TIER_COUNT},(_,i)=>{const start=i*12+1,end=start+11;return shown.filter(p=>Number(p.yahoo_rank)>=start&&Number(p.yahoo_rank)<=end)});
-    const late=shown.filter(p=>Number(p.yahoo_rank)>180||!Number.isFinite(Number(p.yahoo_rank)));
-    $('content').innerHTML=`<div class="draft-summary"><div><span>YAHOO PLAYERS</span><b>${all.length}</b></div><div><span>STARRED</span><b>${targeted}</b></div><div><span>ROUNDS</span><b>${TIER_COUNT}</b></div><div><span>ORDER</span><b>YAHOO</b></div></div><div class="tier-grid">${tiers.map((g,i)=>tier(i+1,g)).join('')}</div>${late.length?`<section class="late-pool"><div class="late-pool-head"><b>LATE POOL</b><span>Yahoo #181+ · ${late.length} players</span></div><div class="late-grid">${late.map(draftRow).join('')}</div></section>`:''}`;
+    const tiers=Array.from({length:TIER_COUNT},(_,i)=>{const n=i+1;return shown.filter(p=>p.tier===n)});
+    const late=shown.filter(p=>!p.tier||p.tier>TIER_COUNT);
+    const warning=gaps.length?`<div class="catalog-error catalog-warning"><b>YAHOO RANK VERIFICATION IN PROGRESS</b><span>Draft remains available. Unverified/missing Yahoo rank${gaps.length===1?'':'s'}: ${gaps.slice(0,12).map(r=>`#${r}`).join(', ')}${gaps.length>12?'…':''}. Verified players keep their Yahoo position and tier.</span></div>`:'';
+    $('content').innerHTML=`${warning}<div class="draft-summary"><div><span>YAHOO PLAYERS</span><b>${all.length}</b></div><div><span>STARRED</span><b>${targeted}</b></div><div><span>ROUNDS</span><b>${TIER_COUNT}</b></div><div><span>ORDER</span><b>YAHOO</b></div></div><div class="tier-grid">${tiers.map((g,i)=>tier(i+1,g)).join('')}</div>${late.length?`<section class="late-pool"><div class="late-pool-head"><b>UNRANKED / LATE POOL</b><span>${late.length} players</span></div><div class="late-grid">${late.map(draftRow).join('')}</div></section>`:''}`;
     bindTargets();
   }
 
