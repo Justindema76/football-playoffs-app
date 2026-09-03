@@ -7,13 +7,13 @@
   const PLAYERS = [
     [1,'Jahmyr Gibbs','RB','TARGET'],[2,'Bijan Robinson','RB','TARGET'],[3,"Ja'Marr Chase",'WR','TARGET'],[4,'Puka Nacua','WR','TARGET'],[5,'Jonathan Taylor','RB','TARGET'],[6,'Christian McCaffrey','RB','INTEL'],[7,'Amon-Ra St. Brown','WR','TARGET'],[8,'Jaxon Smith-Njigba','WR','TARGET'],[9,'James Cook','RB','TARGET'],[10,'Saquon Barkley','RB','INTEL'],[11,'CeeDee Lamb','WR','TARGET'],[12,'Kenneth Walker III','RB','INTEL'],
     [13,'Justin Jefferson','WR','TARGET'],[14,'Chase Brown','RB','TARGET'],[15,"De'Von Achane",'RB','INTEL'],[17,'Derrick Henry','RB','EXPERT'],[18,'Nico Collins','WR','TARGET'],[19,'Brock Bowers','TE','TARGET'],[20,'Drake London','WR','TARGET'],[23,'George Pickens','WR','TARGET'],[24,'Malik Nabers','WR','TARGET'],
-    [25,'Chris Olave','WR','EXPERT'],[28,'Tee Higgins','WR','TARGET'],[29,'Trey McBride','TE','TARGET'],[31,'Josh Allen','QB','TARGET'],[35,'Javonte Williams','RB','TARGET'],
+    [27,'Chris Olave','WR','EXPERT'],[28,'Tee Higgins','WR','TARGET'],[29,'Trey McBride','TE','TARGET'],[31,'Josh Allen','QB','TARGET'],[35,'Javonte Williams','RB','TARGET'],
     [37,'Colston Loveland','TE','TARGET'],[38,'Tetairoa McMillan','WR','TARGET'],[39,'Ladd McConkey','WR','TARGET'],[41,'Travis Etienne Jr.','RB','TARGET'],[42,"D'Andre Swift",'RB','TARGET'],[43,'Emeka Egbuka','WR','TARGET'],[45,'Luther Burden III','WR','INTEL'],[46,'Terry McLaurin','WR','TARGET'],[47,'Tyler Warren','TE','TARGET'],[48,'DJ Moore','WR','TARGET'],
     [49,'Cam Skattebo','RB','TARGET'],[51,'Rome Odunze','WR','TARGET'],[53,'Bucky Irving','RB','TARGET'],[55,'Bhayshul Tuten','RB','TARGET'],[57,'Davante Adams','WR','TARGET'],[59,'David Montgomery','RB','TARGET'],[60,'Jadarian Price','RB','TARGET'],
     [61,'Mike Evans','WR','INTEL'],[62,'Drake Maye','QB','TARGET'],[63,'Jayden Daniels','QB','TARGET'],[64,'Joe Burrow','QB','TARGET'],[66,'Jalen Hurts','QB','TARGET'],[67,'Tucker Kraft','TE','TARGET'],[68,'Rhamondre Stevenson','RB','INTEL'],[69,'Marvin Harrison Jr.','WR','TARGET'],[72,'Caleb Williams','QB','TARGET'],
     [73,'Brian Thomas Jr.','WR','TARGET'],[75,'Justin Herbert','QB','TARGET'],[76,'Jonathon Brooks','RB','TARGET'],[77,'DK Metcalf','WR','INTEL'],[79,'Trevor Lawrence','QB','TARGET'],[80,'Dak Prescott','QB','TARGET'],[83,'Rico Dowdle','RB','TARGET'],[84,'J.K. Dobbins','RB','TARGET'],
     [86,'Michael Wilson','WR','TARGET'],[88,'George Kittle','TE','TARGET'],[89,'Jacory Croskey-Merritt','RB','INTEL'],[90,'Stefon Diggs','WR','TARGET'],[91,'Blake Corum','RB','TARGET'],[93,'Chuba Hubbard','RB','TARGET'],[95,'Jordan Addison','WR','TARGET'],
-    [97,'Brock Purdy','QB','TARGET'],[99,'Courtland Sutton','WR','TARGET'],[101,'Bo Nix','QB','EXPERT'],[103,'Jordan Mason','RB','TARGET'],[105,'Michael Pittman Jr.','WR','INTEL'],[107,'Dalton Kincaid','TE','TARGET'],
+    [97,'Brock Purdy','QB','TARGET'],[99,'Courtland Sutton','WR','TARGET'],[153,'Bo Nix','QB','EXPERT'],[103,'Jordan Mason','RB','TARGET'],[105,'Michael Pittman Jr.','WR','INTEL'],[107,'Dalton Kincaid','TE','TARGET'],
     [109,'RJ Harvey','RB','TARGET'],[112,'Matthew Stafford','QB','TARGET'],[114,'Kyler Murray','QB','INTEL'],[115,'Kenny Gainwell','RB','TARGET'],[116,'Rachaad White','RB','TARGET'],[117,'Dallas Goedert','TE','TARGET'],[118,'Jared Goff','QB','TARGET'],[119,'Patrick Mahomes','QB','TARGET'],[120,'Travis Kelce','TE','TARGET'],
     [123,'Aaron Jones','RB','TARGET'],[124,'Jordan Love','QB','TARGET'],[125,'Jakobi Meyers','WR','TARGET'],[127,'Keaton Mitchell','RB','TARGET'],[129,'MarShawn Lloyd','RB','TARGET'],
     [133,'Woody Marks','RB','TARGET'],[137,'Baker Mayfield','QB','TARGET'],[139,'Tyler Allgeier','RB','TARGET'],
@@ -21,19 +21,20 @@
     [158,'Chig Okonkwo','TE','TARGET'],[159,'Terrance Ferguson','TE','TARGET'],[161,'Braelon Allen','RB','TARGET'],[163,'Brian Robinson','RB','TARGET'],[164,'C.J. Stroud','QB','TARGET'],[166,'Daniel Jones','QB','TARGET'],[168,'Brenton Strange','TE','TARGET'],[171,'Rams D/ST','DEF','INTEL'],
     [186,'Alvin Kamara','RB','TARGET'],[197,'Malik Washington','WR','TARGET'],
 
-    // EXPERT DEPTH — added so every round/pick window can return 4 RB + 4 WR choices
-    [20,'A.J. Brown','WR','EXPERT'],[22,'Rashee Rice','WR','EXPERT'],[24,'Omarion Hampton','RB','EXPERT'],[28,'Kyren Williams','RB','EXPERT'],[29,'Ashton Jeanty','RB','EXPERT'],[31,'Jeremiyah Love','RB','EXPERT'],
-    [36,'Breece Hall','RB','EXPERT'],[37,'Zay Flowers','WR','EXPERT'],[38,'Josh Jacobs','RB','EXPERT'],[40,'DeVonta Smith','WR','EXPERT'],[43,'Jaylen Waddle','WR','EXPERT'],[47,'Garrett Wilson','WR','EXPERT'],[48,'Quinshon Judkins','RB','EXPERT'],
-    [52,'TreVeyon Henderson','RB','EXPERT'],[56,'Jameson Williams','WR','EXPERT'],[60,'Carnell Tate','WR','EXPERT'],[61,'Christian Watson','WR','EXPERT'],[65,'Jaylen Warren','RB','EXPERT'],[69,'Parker Washington','WR','EXPERT'],[74,'Tony Pollard','RB','EXPERT'],
-    [82,'Makai Lemon','WR','EXPERT'],[87,'Kyle Monangai','RB','EXPERT'],[90,'Josh Downs','WR','EXPERT'],[91,'Jayden Reed','WR','EXPERT'],[93,'Chris Godwin','WR','EXPERT'],[100,"Wan'Dale Robinson",'WR','EXPERT'],[101,'Chris Rodriguez','RB','EXPERT'],
-    [103,'Romeo Doubs','WR','EXPERT'],[104,'Xavier Worthy','WR','EXPERT'],[108,'KC Concepcion','WR','EXPERT'],[111,'Quentin Johnston','WR','EXPERT'],[112,'Alec Pierce','WR','EXPERT'],[118,'Matthew Golden','WR','EXPERT'],[121,"De'Zhaun Stribling",'WR','EXPERT'],
-    [127,'Khalil Shakir','WR','EXPERT'],[130,'Tyjae Spears','RB','EXPERT'],[134,'Jalen Coker','WR','EXPERT'],[135,'Jonah Coleman','RB','EXPERT'],[136,'Dylan Sampson','RB','EXPERT'],[137,'Jordyn Tyson','WR','EXPERT'],[138,'Jauan Jennings','WR','EXPERT'],
-    [140,'Rashid Shaheed','WR','EXPERT'],[143,'Omar Cooper Jr.','WR','EXPERT'],[145,'Travis Hunter','WR','EXPERT'],[146,'Zach Charbonnet','RB','EXPERT'],[150,'Tre Tucker','WR','EXPERT'],[151,'Denzel Boston','WR','EXPERT'],[155,'Mike Washington','RB','EXPERT'],
-    [156,"Ja'Kobi Lane",'WR','EXPERT'],[159,'Caleb Douglas','WR','EXPERT'],[160,'Germie Bernard','WR','EXPERT'],[162,'Tre Harris','WR','EXPERT'],[163,'Adonai Mitchell','WR','EXPERT'],[164,'Pat Bryant','WR','EXPERT'],[165,'Ted Hurst','WR','EXPERT'],
-    [168,'Jerry Jeudy','WR','EXPERT'],[169,'Calvin Ridley','WR','EXPERT'],[170,'Dontayvion Wicks','WR','EXPERT'],[174,'Sean Tucker','RB','EXPERT'],[176,'Zachariah Branch','WR','EXPERT'],[177,'Cooper Kupp','WR','EXPERT'],[178,'Tank Bigsby','RB','EXPERT'],
-    [179,'Jaylin Noel','WR','EXPERT'],[180,'Nick Singleton','RB','EXPERT'],[181,'Malik Davis','RB','EXPERT'],[182,'Emmett Johnson','RB','EXPERT'],[184,'Kayshon Boutte','WR','EXPERT'],[185,'Bryce Lance','WR','EXPERT'],[186,'Kaelon Black','RB','EXPERT'],
-    [187,'Tyrone Tracy Jr.','RB','EXPERT'],[189,'DeVaughn Vele','WR','EXPERT'],[190,'Isiah Pacheco','RB','EXPERT'],[192,'Kaytron Allen','RB','EXPERT'],[193,'George Holani','RB','EXPERT'],[194,'Jalen Nailor','WR','EXPERT'],[195,'Tank Dell','WR','EXPERT'],
-    [197,'Isaac TeSlaa','WR','EXPERT'],[198,'Rashod Bateman','WR','EXPERT'],
+    // JUSTIN BOONE EXPERT LEAGUE DEPTH — actual pick numbers from the Sept. 2 Yahoo article.
+    [14,'Omarion Hampton','RB','EXPERT'],[19,'Kyren Williams','RB','EXPERT'],[20,'A.J. Brown','WR','EXPERT'],[21,'Ashton Jeanty','RB','EXPERT'],
+    [28,'DeVonta Smith','WR','EXPERT'],[30,'Zay Flowers','WR','EXPERT'],[32,'Jaylen Waddle','WR','EXPERT'],[33,'Jeremiyah Love','RB','EXPERT'],[35,'Rashee Rice','WR','EXPERT'],
+    [39,'Breece Hall','RB','EXPERT'],[40,'Garrett Wilson','WR','EXPERT'],[47,'Jameson Williams','WR','EXPERT'],
+    [50,'Parker Washington','WR','EXPERT'],[51,'Christian Watson','WR','EXPERT'],[53,'Quinshon Judkins','RB','EXPERT'],
+    [66,'Jaylen Warren','RB','EXPERT'],[67,'TreVeyon Henderson','RB','EXPERT'],[71,'Tony Pollard','RB','EXPERT'],
+    [77,'Carnell Tate','WR','EXPERT'],[79,'Alec Pierce','WR','EXPERT'],[83,'Kyle Monangai','RB','EXPERT'],[84,'Chris Godwin','WR','EXPERT'],
+    [85,'Jayden Reed','WR','EXPERT'],[87,"De'Zhaun Stribling",'WR','EXPERT'],[89,'Josh Downs','WR','EXPERT'],[93,'Quentin Johnston','WR','EXPERT'],
+    [97,'KC Concepcion','WR','EXPERT'],[98,'Matthew Golden','WR','EXPERT'],[102,"Wan'Dale Robinson",'WR','EXPERT'],[103,'Makai Lemon','WR','EXPERT'],[105,'Josh Jacobs','RB','EXPERT'],[107,'Romeo Doubs','WR','EXPERT'],
+    [109,'Chris Rodriguez','RB','EXPERT'],[110,'Jonah Coleman','RB','EXPERT'],[113,'Mike Washington','RB','EXPERT'],[118,'Jordyn Tyson','WR','EXPERT'],[120,'Jalen Coker','WR','EXPERT'],
+    [122,'Tre Tucker','WR','EXPERT'],[125,'Rashid Shaheed','WR','EXPERT'],[127,'Xavier Worthy','WR','EXPERT'],[132,'Tank Bigsby','RB','EXPERT'],
+    [135,'Denzel Boston','WR','EXPERT'],[137,'Dontayvion Wicks','WR','EXPERT'],[139,'Emmett Johnson','RB','EXPERT'],[140,'Zach Charbonnet','RB','EXPERT'],[141,'Kaelon Black','RB','EXPERT'],[142,'Tyjae Spears','RB','EXPERT'],[143,'Dylan Sampson','RB','EXPERT'],
+    [152,'Jaylin Noel','WR','EXPERT'],[155,'Tyrone Tracy Jr.','RB','EXPERT'],
+    [170,'Kayshon Boutte','WR','EXPERT'],[175,'Tank Dell','WR','EXPERT'],[177,"Ja'Kobi Lane",'WR','EXPERT'],[178,'Adonai Mitchell','WR','EXPERT'],
   ].map(([rank,name,pos,source])=>({rank,name,pos,source,tier:Math.ceil(rank/12)}));
 
   const SLOT_PROFILES = {
@@ -98,19 +99,11 @@
     if(mode==='WAIT')return {mode,options:[]};
 
     const limit=(pos==='RB'||pos==='WR')?4:2;
-    const {min,max}=availabilityWindow(overall,round);
-    const eligible=p=>p.pos===pos && (!recent.has(p.name) || round-recent.get(p.name)>2);
+    const eligible=p=>p.pos===pos && p.tier===round && (!recent.has(p.name) || round-recent.get(p.name)>2);
 
-    let candidates=PLAYERS.filter(p=>eligible(p)&&p.rank>=min&&p.rank<=max);
-
-    if(candidates.length<limit){
-      const wideMin=Math.max(1,min-(round<=5?5:12));
-      const wideMax=max+(round<=5?12:30);
-      const extras=PLAYERS.filter(p=>eligible(p)&&p.rank>=wideMin&&p.rank<=wideMax&&!candidates.some(x=>x.name===p.name));
-      candidates=candidates.concat(extras);
-    }
-
-    candidates.sort((a,b)=>{
+    // STRICT TIER RULE: normal Round N choices must be Tier N.
+    // Never pull a later-tier player backward just to fill four slots.
+    const candidates=PLAYERS.filter(eligible).sort((a,b)=>{
       const da=Math.abs(a.rank-overall),db=Math.abs(b.rank-overall);
       const sa=SOURCE_ORDER[a.source]??9,sb=SOURCE_ORDER[b.source]??9;
       return da-db||sa-sb||a.rank-b.rank;
