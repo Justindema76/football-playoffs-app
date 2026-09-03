@@ -19,7 +19,21 @@
     [133,'Woody Marks','RB','TARGET'],[137,'Baker Mayfield','QB','TARGET'],[139,'Tyler Allgeier','RB','TARGET'],
     [146,'Jake Ferguson','TE','TARGET'],[148,'Keenan Allen','WR','TARGET'],[151,'Dalton Schultz','TE','TARGET'],[152,'Deebo Samuel Sr.','WR','TARGET'],[154,'Jalen McMillan','WR','TARGET'],
     [158,'Chig Okonkwo','TE','TARGET'],[159,'Terrance Ferguson','TE','TARGET'],[161,'Braelon Allen','RB','TARGET'],[163,'Brian Robinson','RB','TARGET'],[164,'C.J. Stroud','QB','TARGET'],[166,'Daniel Jones','QB','TARGET'],[168,'Brenton Strange','TE','TARGET'],[171,'Rams D/ST','DEF','INTEL'],
-    [186,'Alvin Kamara','RB','TARGET'],[197,'Malik Washington','WR','TARGET']
+    [186,'Alvin Kamara','RB','TARGET'],[197,'Malik Washington','WR','TARGET'],
+
+    // EXPERT DEPTH — added so every round/pick window can return 4 RB + 4 WR choices
+    [20,'A.J. Brown','WR','EXPERT'],[22,'Rashee Rice','WR','EXPERT'],[24,'Omarion Hampton','RB','EXPERT'],[28,'Kyren Williams','RB','EXPERT'],[29,'Ashton Jeanty','RB','EXPERT'],[31,'Jeremiyah Love','RB','EXPERT'],
+    [36,'Breece Hall','RB','EXPERT'],[37,'Zay Flowers','WR','EXPERT'],[38,'Josh Jacobs','RB','EXPERT'],[40,'DeVonta Smith','WR','EXPERT'],[43,'Jaylen Waddle','WR','EXPERT'],[47,'Garrett Wilson','WR','EXPERT'],[48,'Quinshon Judkins','RB','EXPERT'],
+    [52,'TreVeyon Henderson','RB','EXPERT'],[56,'Jameson Williams','WR','EXPERT'],[60,'Carnell Tate','WR','EXPERT'],[61,'Christian Watson','WR','EXPERT'],[65,'Jaylen Warren','RB','EXPERT'],[69,'Parker Washington','WR','EXPERT'],[74,'Tony Pollard','RB','EXPERT'],
+    [82,'Makai Lemon','WR','EXPERT'],[87,'Kyle Monangai','RB','EXPERT'],[90,'Josh Downs','WR','EXPERT'],[91,'Jayden Reed','WR','EXPERT'],[93,'Chris Godwin','WR','EXPERT'],[100,"Wan'Dale Robinson",'WR','EXPERT'],[101,'Chris Rodriguez','RB','EXPERT'],
+    [103,'Romeo Doubs','WR','EXPERT'],[104,'Xavier Worthy','WR','EXPERT'],[108,'KC Concepcion','WR','EXPERT'],[111,'Quentin Johnston','WR','EXPERT'],[112,'Alec Pierce','WR','EXPERT'],[118,'Matthew Golden','WR','EXPERT'],[121,"De'Zhaun Stribling",'WR','EXPERT'],
+    [127,'Khalil Shakir','WR','EXPERT'],[130,'Tyjae Spears','RB','EXPERT'],[134,'Jalen Coker','WR','EXPERT'],[135,'Jonah Coleman','RB','EXPERT'],[136,'Dylan Sampson','RB','EXPERT'],[137,'Jordyn Tyson','WR','EXPERT'],[138,'Jauan Jennings','WR','EXPERT'],
+    [140,'Rashid Shaheed','WR','EXPERT'],[143,'Omar Cooper Jr.','WR','EXPERT'],[145,'Travis Hunter','WR','EXPERT'],[146,'Zach Charbonnet','RB','EXPERT'],[150,'Tre Tucker','WR','EXPERT'],[151,'Denzel Boston','WR','EXPERT'],[155,'Mike Washington','RB','EXPERT'],
+    [156,"Ja'Kobi Lane",'WR','EXPERT'],[159,'Caleb Douglas','WR','EXPERT'],[160,'Germie Bernard','WR','EXPERT'],[162,'Tre Harris','WR','EXPERT'],[163,'Adonai Mitchell','WR','EXPERT'],[164,'Pat Bryant','WR','EXPERT'],[165,'Ted Hurst','WR','EXPERT'],
+    [168,'Jerry Jeudy','WR','EXPERT'],[169,'Calvin Ridley','WR','EXPERT'],[170,'Dontayvion Wicks','WR','EXPERT'],[174,'Sean Tucker','RB','EXPERT'],[176,'Zachariah Branch','WR','EXPERT'],[177,'Cooper Kupp','WR','EXPERT'],[178,'Tank Bigsby','RB','EXPERT'],
+    [179,'Jaylin Noel','WR','EXPERT'],[180,'Nick Singleton','RB','EXPERT'],[181,'Malik Davis','RB','EXPERT'],[182,'Emmett Johnson','RB','EXPERT'],[184,'Kayshon Boutte','WR','EXPERT'],[185,'Bryce Lance','WR','EXPERT'],[186,'Kaelon Black','RB','EXPERT'],
+    [187,'Tyrone Tracy Jr.','RB','EXPERT'],[189,'DeVaughn Vele','WR','EXPERT'],[190,'Isiah Pacheco','RB','EXPERT'],[192,'Kaytron Allen','RB','EXPERT'],[193,'George Holani','RB','EXPERT'],[194,'Jalen Nailor','WR','EXPERT'],[195,'Tank Dell','WR','EXPERT'],
+    [197,'Isaac TeSlaa','WR','EXPERT'],[198,'Rashod Bateman','WR','EXPERT'],
   ].map(([rank,name,pos,source])=>({rank,name,pos,source,tier:Math.ceil(rank/12)}));
 
   const SLOT_PROFILES = {
@@ -108,7 +122,8 @@
   function playerRow(p){
     const star=p.source==='TARGET'?'★ ':'';
     const source=p.source==='TARGET'?'YOUR TARGET':p.source==='INTEL'?'INTEL':'EXPERT';
-    return `<div class="position-option"><div class="position-name">${star}${esc(p.name)}</div><div class="position-meta">Y#${p.rank} · ${esc(p.status)} · ${source}</div></div>`;
+    const rankLabel=p.source==='EXPERT'?'E#':'Y#';
+    return `<div class="position-option"><div class="position-name">${star}${esc(p.name)}</div><div class="position-meta">${rankLabel}${p.rank} · ${esc(p.status)} · ${source}</div></div>`;
   }
 
   function positionBox(pos,result){
