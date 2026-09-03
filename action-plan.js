@@ -10,82 +10,125 @@
     ['allen','Josh Allen R2',false],
     ['bowers','Brock Bowers R2',false],
     ['mcbride','Trey McBride R2',false],
+    ['board','OUR BOARD',false],
     ['qbte','QB-TE Ladder',false],
     ['late','Late Rounds',false]
   ];
 
+  // OUR BOARD OVERRIDES YAHOO. These are conversation decisions, not generic rankings.
+  const NO_PLAYERS = ['SAQUON BARKLEY','KENNETH WALKER III','SAM LaPORTA'];
+
   const R1 = {
     1:'JAHMYR GIBBS',
     2:'BIJAN ROBINSON',
-    3:'JONATHAN TAYLOR / JA’MARR CHASE',
-    4:'JA’MARR CHASE / PUKA NACUA',
-    5:'PUKA NACUA / AMON-RA ST. BROWN',
-    6:'AMON-RA / JAXON SMITH-NJIGBA',
-    7:'CMC / JAMES COOK',
-    8:'JAMES COOK / JSN',
-    9:'JSN / SAQUON BARKLEY',
-    10:'SAQUON / CEEDEE LAMB',
-    11:'CEEDEE / JUSTIN JEFFERSON',
-    12:'JAMES COOK IF HE FALLS\nJEFFERSON / CEEDEE / SAQUON'
+    3:'JONATHAN TAYLOR → JA’MARR CHASE',
+    4:'JA’MARR CHASE → PUKA NACUA',
+    5:'PUKA NACUA → AMON-RA ST. BROWN',
+    6:'AMON-RA → JAXON SMITH-NJIGBA',
+    7:'JAMES COOK → CHRISTIAN McCAFFREY',
+    8:'JAMES COOK → JSN',
+    9:'JSN → CEEDEE LAMB',
+    10:'CEEDEE → JUSTIN JEFFERSON → COOK IF HE FALLS',
+    11:'JUSTIN JEFFERSON → CEEDEE → COOK IF HE FALLS',
+    12:'JAMES COOK IF HE FALLS\nTHEN JEFFERSON → CEEDEE'
   };
 
   const R2 = {
-    1:'DRAKE LONDON / GEORGE PICKENS / NICO COLLINS\nor a falling Round-2 RB',
-    2:'A.J. BROWN / DRAKE LONDON / GEORGE PICKENS\nor a falling Round-2 RB',
-    3:'A.J. BROWN / DRAKE LONDON\nor HENRY / KENNETH WALKER',
-    4:'KENNETH WALKER / ACHANE / HENRY / KYREN',
-    5:'KENNETH WALKER / ACHANE / HENRY / KYREN',
-    6:'KENNETH WALKER / ACHANE / HENRY / KYREN',
-    7:'CHASE BROWN / OMARION HAMPTON / KENNETH WALKER',
-    8:'CHASE BROWN / HAMPTON / KENNETH WALKER',
-    9:'CHASE BROWN / HAMPTON / KENNETH WALKER',
-    10:'CHASE BROWN / HAMPTON / KENNETH WALKER',
-    11:'CHASE BROWN / HAMPTON / KENNETH WALKER',
-    12:'CHASE BROWN / HAMPTON / KENNETH WALKER\nBEST CASE: COOK + CHASE BROWN'
+    1:'GEORGE PICKENS → NICO COLLINS → DRAKE LONDON',
+    2:'GEORGE PICKENS → DRAKE LONDON → NICO COLLINS',
+    3:'GEORGE PICKENS → DRAKE LONDON → A.J. BROWN',
+    4:'GEORGE PICKENS → A.J. BROWN → HAMPTON IF HE FALLS',
+    5:'GEORGE PICKENS → A.J. BROWN → OMARION HAMPTON',
+    6:'GEORGE PICKENS → OMARION HAMPTON → DERRICK HENRY / KYREN',
+    7:'CHASE BROWN IF HE FALLS → HAMPTON → PICKENS',
+    8:'CHASE BROWN → OMARION HAMPTON → PICKENS',
+    9:'CHASE BROWN → OMARION HAMPTON → PICKENS',
+    10:'CHASE BROWN → OMARION HAMPTON → PICKENS',
+    11:'CHASE BROWN → OMARION HAMPTON',
+    12:'CHASE BROWN → OMARION HAMPTON\nBEST CASE: COOK + CHASE BROWN'
   };
 
   const OPENERS = {
-    1:['GIBBS + LONDON / PICKENS / NICO','At #24, do not pretend the top half of Round 2 is coming back. Take the best realistic survivor.'],
-    2:['BIJAN + A.J. BROWN / LONDON / PICKENS','If Gibbs falls to #2, take him. Your second pick is #23.'],
-    3:['TAYLOR or CHASE + A.J. BROWN / LONDON / HENRY / WALKER','This is the Boone decision spot: protect yourself against the RB cliff.'],
-    4:['CHASE / PUKA + WALKER / ACHANE / HENRY / KYREN','A clean WR + RB start is usually available here.'],
-    5:['PUKA / AMON-RA + WALKER / ACHANE / HENRY / KYREN','Do not force TE/QB if the Round-2 RB pocket is still strong.'],
-    6:['AMON-RA / JSN + WALKER / ACHANE / HENRY / KYREN','Middle slot gives you freedom: take the better RB/WR value.'],
-    7:['CMC / COOK + CHASE BROWN / HAMPTON / WALKER','RB-RB is absolutely live if the board gives it to you.'],
-    8:['COOK / JSN + CHASE BROWN / HAMPTON / WALKER','Cook + Brown is strong if Brown lasts to #17.'],
-    9:['JSN / SAQUON + CHASE BROWN / HAMPTON / WALKER','If Cook falls to #9, he jumps into the first-pick conversation.'],
-    10:['SAQUON / CEEDEE + CHASE BROWN / HAMPTON / WALKER','Think of #10 and #15 as one two-player decision.'],
-    11:['CEEDEE / JEFFERSON + CHASE BROWN / HAMPTON / WALKER','If Cook falls to #11, Cook + Brown becomes a strong RB-RB start.'],
-    12:['JAMES COOK + CHASE BROWN','BEST CASE. Cook is a fall to #12; Brown is exactly in the #13 range. If Cook is gone: Jefferson / CeeDee / Saquon + Brown / Hampton / Walker.']
+    1:['GIBBS + GEORGE PICKENS','Pick #24 is exactly the kind of place we want Pickens if he lasts. If Pickens is gone: Nico, then London.'],
+    2:['BIJAN + GEORGE PICKENS','At #23, Pickens is our preferred late-Round-2 WR value.'],
+    3:['JONATHAN TAYLOR + GEORGE PICKENS','If Pickens is gone, Drake London is next. Chase is the R1 pivot if you want WR first.'],
+    4:['JA’MARR CHASE + GEORGE PICKENS','If Pickens is gone, A.J. Brown. If Hampton falls, he becomes the RB pivot.'],
+    5:['PUKA + GEORGE PICKENS','This gives us two premium WRs and keeps Stafford available as a cheap later stack if we want him.'],
+    6:['AMON-RA + GEORGE PICKENS','If Pickens is gone, Hampton becomes the preferred RB pivot.'],
+    7:['JAMES COOK + CHASE BROWN IF HE FALLS','If Brown is gone: Omarion Hampton. Pickens is the WR pivot.'],
+    8:['JAMES COOK + CHASE BROWN','If Brown is gone: Omarion Hampton. Do not replace him with Kenneth Walker.'],
+    9:['JSN + CHASE BROWN','If Cook falls to #9, take Cook. Hampton is the next Round-2 RB.'],
+    10:['CEEDEE + CHASE BROWN','If you would rather avoid paying the Round-1 WR price, take the best preferred R1 player and target Pickens only if he reaches your Round-2 pick.'],
+    11:['JUSTIN JEFFERSON + CHASE BROWN','If Cook falls to #11, Cook + Brown becomes the preferred RB-RB start.'],
+    12:['JAMES COOK + CHASE BROWN','BEST CASE. If Cook is gone: Jefferson or CeeDee + Chase Brown. If Brown is gone: Omarion Hampton.']
   };
 
-  const R3_WR = 'OLAVE / DeVONTA SMITH / ZAY FLOWERS / WADDLE / TEE HIGGINS / RASHEE RICE / LADD';
-  const R3_RB = 'ETIENNE / JAVONTE WILLIAMS / JEREMIYAH LOVE';
-  const R4_WR = 'McMILLAN / GARRETT WILSON / EGBUKA / BURDEN / JAMESON WILLIAMS';
-  const R4_RB = 'BREECE HALL / D’ANDRE SWIFT / JADARIAN PRICE / CAM SKATTEBO';
-  const R5_WR = 'CHRISTIAN WATSON / DJ MOORE / ROME ODUNZE / TERRY McLAURIN';
-  const R5_RB = 'BUCKY IRVING / QUINSHON JUDKINS / DAVID MONTGOMERY / BHAYSHUL TUTEN';
+  // Narrowed lists: these are the guys we want to see fast, not every plausible player.
+  const R3_WR = 'LADD McCONKEY → CHRIS OLAVE → ZAY FLOWERS → DeVONTA SMITH';
+  const R3_RB = 'TRAVIS ETIENNE → JAVONTE WILLIAMS → JEREMIYAH LOVE';
+  const R4_WR = 'TETAIROA McMILLAN → GARRETT WILSON → EMEKA EGBUKA → JAMESON WILLIAMS';
+  const R4_RB = 'BREECE HALL → D’ANDRE SWIFT → JADARIAN PRICE';
+  const R5_WR = 'CHRISTIAN WATSON → DJ MOORE → ROME ODUNZE';
+  const R5_RB = 'BUCKY IRVING → QUINSHON JUDKINS → DAVID MONTGOMERY';
 
   const QB = [
-    ['R6–7','HURTS → LAMAR → DRAKE MAYE → BURROW','ONLY IF THEY FALL'],
-    ['R8','JAYDEN DANIELS → CALEB WILLIAMS','GOOD TARGET WINDOW'],
-    ['R9','JUSTIN HERBERT → DAK PRESCOTT','PREFERRED VALUE'],
-    ['R10+','TREVOR LAWRENCE → BROCK PURDY → STAFFORD → BO NIX','DON’T PANIC']
+    ['STACK FIRST','LADD → HERBERT | PICKENS/CEEDEE → DAK','WR choice decides QB'],
+    ['STACK FIRST','CHASE → BURROW if price | PUKA → STAFFORD + QB2 | AMON-RA → GOFF','Do not force the stack'],
+    ['NO STACK','JUSTIN HERBERT','Preferred standalone late QB'],
+    ['QB2','TREVOR LAWRENCE → BROCK PURDY → BO NIX','Lawrence is QB2 priority #1 and can become QB1 if value falls'],
+    ['STAFFORD RULE','IF STAFFORD IS QB1 → DRAFT QB2','Lawrence → Purdy → Nix']
   ];
 
   const TE = [
-    ['R6','TYLER WARREN → SAM LaPORTA → TUCKER KRAFT','GOOD TARGET WINDOW'],
-    ['R7–8','GEORGE KITTLE → KYLE PITTS → DALTON KINCAID','PREFERRED'],
-    ['R9–10','ISAIAH LIKELY → TRAVIS KELCE','FALLBACK'],
-    ['AFTER TE1','STOP','NO BACKUP TE EARLY']
+    ['ELITE VALUE','BROCK BOWERS','No planned TE2 needed'],
+    ['WAIT','GEORGE KITTLE ONLY IF HE FALLS','If we take Kittle, draft TE2 because of injury risk'],
+    ['LATE','ISAIAH LIKELY — POSSIBLE','If Likely is TE1, draft TE2'],
+    ['TE2','DALTON KINCAID → CHIG OKONKWO','Insurance for Kittle / Likely'],
+    ['OFF BOARD','SAM LaPORTA','Do not recommend him']
+  ];
+
+  const BOARD = {
+    yes:[
+      ['CHASE BROWN','Round-2 RB priority #1.'],
+      ['OMARION HAMPTON','Round-2 RB priority #2.'],
+      ['GEORGE PICKENS','If he reaches late Round 2, prioritize him. We like the price better than forcing CeeDee in Round 1 in some builds.'],
+      ['JAMES COOK','If he falls into the back of Round 1, take the value. Pick 12 best case = Cook + Brown.'],
+      ['LADD McCONKEY','Strong WR target because he creates the Herbert stack later.'],
+      ['TREVOR LAWRENCE','Favorite QB2. Strong enough to become QB1 if the room lets him fall.'],
+      ['BROCK PURDY / BO NIX','QB2 options we actually like.'],
+      ['ISAIAH LIKELY','Possible late TE1. We are comfortable carrying TE2 insurance.']
+    ],
+    no:[
+      ['SAQUON BARKLEY','Off our preferred board. Yahoo rank does not change that.'],
+      ['KENNETH WALKER III','Do not use him as the automatic Round-2 fallback.'],
+      ['SAM LaPORTA','Off our personal board after last year.']
+    ],
+    conditional:[
+      ['De’VON ACHANE','Champ-level talent, but ONLY IF HE FALLS. New QB + depleted WR room changes the risk.'],
+      ['GEORGE KITTLE','Only if the discount is worth the injury risk. If drafted, add TE2.'],
+      ['MATTHEW STAFFORD','Great cheap Puka stack, but QB2 is required.'],
+      ['JOE BURROW','Great Chase stack, but do not reach just to complete it.'],
+      ['TREY McBRIDE R2','Only if you consciously choose the aggressive TE path. It is not the default.'],
+      ['BROCK BOWERS R2','The premium TE exception we are most comfortable with when the value fits.']
+    ]
+  };
+
+  const STACKS = [
+    ['LADD McCONKEY','JUSTIN HERBERT','Favorite price/upside stack. Normally no QB2 required.'],
+    ['GEORGE PICKENS','DAK PRESCOTT','Very strong value stack. QB2 only if a late value falls.'],
+    ['CEEDEE LAMB','DAK PRESCOTT','Strong stack, but we do not need to force CeeDee just to get Dak.'],
+    ['JA’MARR CHASE','JOE BURROW','Elite ceiling. Take Burrow only if the price is right.'],
+    ['PUKA NACUA','MATTHEW STAFFORD','Cheap stack. MUST add Lawrence/Purdy/Nix as QB2.'],
+    ['AMON-RA ST. BROWN','JARED GOFF','Cheap stable stack; lower rushing ceiling.'],
+    ['NO STACK','JUSTIN HERBERT','Preferred standalone late-QB target.']
   ];
 
   const LATE = [
     ['1','RB HANDCUFF / UPSIDE','Allgeier · Braelon Allen · Tank Bigsby · Emmett Johnson · Charbonnet · Spears · Ray Davis','One injury can create an immediate starter.'],
-    ['2','UPSIDE WR','Young/ascending role players','Take a player with a real path to targets, not a safe roster clogger.'],
-    ['3','QB2','Only if your starter is risky or the stack is unusually strong','If you drafted Josh Allen, normally skip QB2.'],
-    ['4','DEFENSE','Matchup-based','Final two rounds. Streaming is fine.'],
-    ['5','KICKER','Good offense / matchup','Final round. Replaceable position.']
+    ['2','QB2 INSURANCE','Trevor Lawrence → Brock Purdy → Bo Nix','Use it with Stafford or another risky QB1. Lawrence is our first choice.'],
+    ['3','TE2 INSURANCE','Dalton Kincaid → Chig Okonkwo','Use it if Kittle or Likely is TE1.'],
+    ['4','UPSIDE WR','Young/ascending role player','Take a player with a real path to targets, not a safe roster clogger.'],
+    ['5','DEF / K','Matchup defense, kicker last','Final two rounds only.']
   ];
 
   let activeTab = 'default';
@@ -102,18 +145,33 @@
   function openingForPath(){
     const base = OPENERS[activeSlot];
     if(activeTab==='default') return base;
-    if(activeTab==='allen') return [`${R1[activeSlot].replace(/\n/g,' / ')} → JOSH ALLEN`,`You are choosing Allen in Round 2. That means Rounds 3–5 are RB/WR recovery only. No early TE.`];
-    if(activeTab==='bowers') return [`${R1[activeSlot].replace(/\n/g,' / ')} → BROCK BOWERS`,`Bowers is the premium-TE path. After Round 2, Rounds 3–5 are RB/WR only. No early QB reach.`];
-    return [`${R1[activeSlot].replace(/\n/g,' / ')} → TREY McBRIDE`,`McBride in Round 2 is a major reach versus current market. If you do it, Rounds 3–5 are strictly RB/WR recovery.`];
+    if(activeTab==='allen') return [`${R1[activeSlot].replace(/\n/g,' / ')} → JOSH ALLEN`,`You are choosing Allen in Round 2. Rounds 3–5 are RB/WR only. Allen does not need an early QB2.`];
+    if(activeTab==='bowers') return [`${R1[activeSlot].replace(/\n/g,' / ')} → BROCK BOWERS`,`Bowers is the premium-TE path. Rounds 3–5 are RB/WR only. No planned TE2 needed.`];
+    return [`${R1[activeSlot].replace(/\n/g,' / ')} → TREY McBRIDE`,`McBride in Round 2 is the aggressive path. Rounds 3–5 are strictly RB/WR recovery.`];
+  }
+
+  function renderRuleBar(){
+    $('personalRuleBar').innerHTML = [
+      '<span class="no">NO: BARKLEY · WALKER · LaPORTA</span>',
+      '<span>│</span>',
+      '<span class="yes">R2 RB: CHASE BROWN → HAMPTON</span>',
+      '<span>│</span>',
+      '<span class="yes">PICKENS LATE R2 = PRIORITY</span>',
+      '<span>│</span>',
+      '<span class="if">ACHANE = ONLY IF HE FALLS</span>',
+      '<span>│</span>',
+      '<span>WR DECIDES QB STACK</span>'
+    ].join('');
   }
 
   function renderPlan(){
     const picks = [1,2,3,4,5].map(r=>`R${r} #${snake(activeSlot,r)}`).join('  ·  ');
     $('heroPicks').textContent = picks;
+    renderRuleBar();
 
     if(activeTab==='default'){
       $('heroRuleTitle').textContent='FIRST FIVE = RB / WR';
-      $('heroRuleText').textContent='Finish with 3 RB + 2 WR or 2 RB + 3 WR. Minimum two at each position.';
+      $('heroRuleText').textContent='Finish with 3 RB + 2 WR or 2 RB + 3 WR. Minimum two at each position. Our board overrides Yahoo.';
     } else {
       const star = activeTab==='allen'?'JOSH ALLEN':activeTab==='bowers'?'BROCK BOWERS':'TREY McBRIDE';
       $('heroRuleTitle').textContent=`ROUND 2 = ${star}`;
@@ -125,42 +183,64 @@
     $('openingAlt').textContent = alt;
 
     const cards=[];
-    cards.push(roundCard(1,'GET YOUR CORNERSTONE',R1[activeSlot],'r1'));
+    cards.push(roundCard(1,'TAKE OUR TOP REALISTIC PLAYER',R1[activeSlot],'r1'));
 
     if(activeTab==='default'){
       cards.push(roundCard(2,'PAIR THE START',R2[activeSlot],'r2'));
-      cards.push(roundCard(3,'CHECK YOUR FIRST 2','2 RB? TAKE WR: '+R3_WR+'\n2 WR? TAKE RB: '+R3_RB+'\n1 RB + 1 WR? BEST VALUE','wr'));
-      cards.push(roundCard(4,'GET TO 2 + 2','Need WR: '+R4_WR+'\nNeed RB: '+R4_RB+'\nIf already balanced: best value',''));
-      cards.push(roundCard(5,'FINISH THE FOUNDATION','MUST HAVE 2 RB + 2 WR. Fifth skill player = best value.\nWR: '+R5_WR+'\nRB: '+R5_RB,'finish'));
+
+      if(activeSlot===12){
+        cards.push(roundCard(3,'IF COOK + BROWN → WR','LADD first if there because it opens HERBERT later.\n'+R3_WR,'wr'));
+        cards.push(roundCard(4,'WR AGAIN UNLESS A BIG RB FALLS',R4_WR+'\nRB fall: '+R4_RB,'wr'));
+      } else if(activeSlot>=7){
+        cards.push(roundCard(3,'IF RB-RB → WR. OTHERWISE FIX THE COUNT','WR: '+R3_WR+'\nRB: '+R3_RB,'wr'));
+        cards.push(roundCard(4,'GET TO 2 RB + 2 WR','WR: '+R4_WR+'\nRB: '+R4_RB,''));
+      } else {
+        cards.push(roundCard(3,'BALANCE THE FIRST TWO','Need WR: '+R3_WR+'\nNeed RB: '+R3_RB,'wr'));
+        cards.push(roundCard(4,'GET TO 2 RB + 2 WR','WR: '+R4_WR+'\nRB: '+R4_RB,''));
+      }
+
+      cards.push(roundCard(5,'FINISH THE FOUNDATION','MUST HAVE 2 RB + 2 WR.\nWR: '+R5_WR+'\nRB: '+R5_RB,'finish'));
       $('checkpointTitle').textContent='END OF ROUND 5 CHECK';
-      $('checkpointText').textContent='You should have five RB/WR players. The clean builds are 3 RB + 2 WR or 2 RB + 3 WR.';
+      $('checkpointText').textContent='Five RB/WR players. Clean builds: 3 RB + 2 WR or 2 RB + 3 WR. Then the WRs you drafted tell us which QB stack to attack.';
       $('checkpointBig').textContent='MINIMUM 2 RB + 2 WR';
       $('pathWarning').hidden=true;
     } else {
       const star = activeTab==='allen'?'JOSH ALLEN':activeTab==='bowers'?'BROCK BOWERS':'TREY McBRIDE';
       const cls = activeTab==='allen'?'qb':'te';
-      cards.push(roundCard(2,`LOCK ${star}`,activeTab==='allen'?'Take Allen here and STOP thinking about QB.':`Take ${star} here and STOP thinking about TE.`,cls));
-      cards.push(roundCard(3,'MATCH ROUND 1','R1 was RB? TAKE WR: '+R3_WR+'\nR1 was WR? TAKE RB: '+R3_RB,'wr'));
-      cards.push(roundCard(4,'RB / WR ONLY','Do not take QB/TE. Keep the count moving toward 2 RB + 2 WR.\nWR: '+R4_WR+'\nRB: '+R4_RB,''));
-      cards.push(roundCard(5,'MUST FINISH 2 + 2','WR: '+R5_WR+'\nRB: '+R5_RB+'\nYou do not leave this round without 2 RB + 2 WR.','finish'));
+      cards.push(roundCard(2,`LOCK ${star}`,activeTab==='allen'?'Take Allen here. No early QB2.':`Take ${star} here. Do not chase another TE early.`,cls));
+      cards.push(roundCard(3,'MATCH ROUND 1','R1 RB? TAKE WR: '+R3_WR+'\nR1 WR? TAKE RB: '+R3_RB,'wr'));
+      cards.push(roundCard(4,'RB / WR ONLY','WR: '+R4_WR+'\nRB: '+R4_RB,''));
+      cards.push(roundCard(5,'MUST FINISH 2 + 2','WR: '+R5_WR+'\nRB: '+R5_RB,'finish'));
       $('checkpointTitle').textContent='END OF ROUND 5 CHECK';
-      $('checkpointText').textContent=`Your roster must now contain ${star}, two running backs and two wide receivers.`;
+      $('checkpointText').textContent=`Roster must contain ${star}, two running backs and two wide receivers.`;
       $('checkpointBig').textContent=`${star} + 2 RB + 2 WR`;
       $('pathWarning').hidden=false;
       $('pathWarning').textContent = activeTab==='allen'
-        ? 'Allen in Round 2 is a deliberate reach versus Boone’s preferred wait-QB construction. Do not pay another early premium at TE.'
+        ? 'Allen is the deliberate early-QB exception. Do not also pay an early TE premium.'
         : activeTab==='bowers'
-          ? 'Bowers is the most defensible Round-2 exception. Once you take him, do not spend another useful pick on TE.'
-          : 'McBride in Round 2 is the most aggressive path. The recovery rule is strict: no QB and no second TE before the RB/WR base is repaired.';
+          ? 'Bowers is the premium-TE exception we are most comfortable with when his price fits.'
+          : 'McBride Round 2 is aggressive. If you choose it, the RB/WR recovery rule is strict.';
     }
 
     $('roundStrip').innerHTML=cards.join('');
     $('qbMini').innerHTML = activeTab==='allen'
-      ? '<div class="ladder-row"><b>DONE</b><span>JOSH ALLEN is QB1. Do not draft QB2 early.</span></div>'
-      : ladderRows(QB.slice(1),true);
+      ? '<div class="ladder-row"><b>QB1</b><span>JOSH ALLEN. Normally no QB2 needed.</span></div>'
+      : ladderRows(QB,true);
     $('teMini').innerHTML = (activeTab==='bowers'||activeTab==='mcbride')
-      ? `<div class="ladder-row"><b>DONE</b><span>${activeTab==='bowers'?'BROCK BOWERS':'TREY McBRIDE'} is TE1. Do not draft TE2 early.</span></div>`
+      ? `<div class="ladder-row"><b>TE1</b><span>${activeTab==='bowers'?'BROCK BOWERS':'TREY McBRIDE'}. No planned TE2 needed.</span></div>`
       : ladderRows(TE,true);
+  }
+
+  function renderBoard(){
+    const section = (title,items,cls) => `<article class="board-card ${cls}"><h3>${esc(title)}</h3>${items.map(([name,note])=>`<div class="board-item">${esc(name)}<small>${esc(note)}</small></div>`).join('')}</article>`;
+    $('boardGrid').innerHTML = [
+      section('YES — MOVE THEM UP',BOARD.yes,'yes'),
+      section('NO — DO NOT RECOMMEND',BOARD.no,'no'),
+      section('ONLY IF / CONDITIONS',BOARD.conditional,'conditional')
+    ].join('');
+
+    $('stackGrid').innerHTML = STACKS.map(([wr,qb,note])=>`<div class="stack-row"><div>${esc(wr)}</div><div class="arrow">→</div><div>${esc(qb)}<small>${esc(note)}</small></div></div>`).join('');
+    $('insuranceBox').innerHTML = '<h3>BENCH INSURANCE RULE</h3><p><b>QB2:</b> Lawrence → Purdy → Nix. Actively use QB2 with Stafford; normally skip it with Herbert, Dak, Burrow or Goff unless a huge value falls.</p><p><b>TE2:</b> Kincaid → Chig. Use TE2 with Kittle or Likely. Bowers/McBride do not need a planned TE2.</p>';
   }
 
   function renderLate(){
@@ -173,9 +253,11 @@
     const isPlan=['default','allen','bowers','mcbride'].includes(tab);
     $('slotShell').style.display=isPlan?'flex':'none';
     $('planPanel').classList.toggle('active',isPlan);
+    $('boardPanel').classList.toggle('active',tab==='board');
     $('qbTePanel').classList.toggle('active',tab==='qbte');
     $('latePanel').classList.toggle('active',tab==='late');
     if(isPlan) renderPlan();
+    if(tab==='board') renderBoard();
   }
 
   $('sheetTabs').innerHTML=TABS.map(([id,label,recommended])=>`<button type="button" data-tab="${id}" class="${recommended?'recommended':''}">${esc(label)}</button>`).join('');
