@@ -3,18 +3,35 @@
   const SB='https://bbodmhffnqebhfksjier.supabase.co';
   const KEY='sb_publishable_L048cgw2gZwCeWmSWpUclA_cuKCSyQn';
   const H={apikey:KEY,Authorization:`Bearer ${KEY}`,'Content-Type':'application/json'};
-  const state={players:[],gone:new Map(),view:'starred',q:'',lastChange:null};
+  const state={players:[],gone:new Map(),view:'starred',q:'',lastChange:null,mineSupported:null};
   const $=id=>document.getElementById(id);
   const norm=v=>String(v||'').toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g,' ').replace(/\b(jr|sr|ii|iii|iv)\b/g,' ').replace(/\s+/g,' ').trim();
   const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   async function api(path,options={}){const r=await fetch(`${SB}/rest/v1/${path}`,{...options,headers:{...H,...(options.headers||{})}});if(!r.ok)throw Error(await r.text()||String(r.status));return r.status===204?null:r.json()}
+  async function loadLive(){
+    // "mine" may not exist as a column yet (it's an additive feature on
+    // top of an already-working table) -- ask for it, and if Postgres
+    // rejects the select outright, fall back to the plain query instead
+    // of taking the whole page down over a bonus field.
+    if(state.mineSupported!==false){
+      try{
+        const rows=await api('live_draft_state?select=player_key,drafted,drafted_at,mine&drafted=eq.true&order=drafted_at.desc');
+        state.mineSupported=true;
+        return rows;
+      }catch(e){
+        if(!/column|schema cache|does not exist|42703/i.test(String(e.message||'')))throw e;
+        state.mineSupported=false;
+      }
+    }
+    return api('live_draft_state?select=player_key,drafted,drafted_at&drafted=eq.true&order=drafted_at.desc');
+  }
   async function load(){
     $('syncStatus').className='status syncing';$('syncStatus').textContent='SYNCING';
     try{
       const [catalog,targets,live]=await Promise.all([
         api('draft_player_catalog?select=player_key,yahoo_name,display_name,team,position,yahoo_rank,active&active=eq.true&order=yahoo_rank.asc.nullslast'),
         api('draft_target_selection?select=player_key,user_target'),
-        api('live_draft_state?select=player_key,drafted,drafted_at&drafted=eq.true&order=drafted_at.desc')
+        loadLive()
       ]);
       const tm=new Map((targets||[]).map(x=>[norm(x.player_key),!!x.user_target]));
       state.gone=new Map((live||[]).map(x=>[norm(x.player_key),x]));
@@ -33,8 +50,10 @@
   }
   function filtered(){return state.players.filter(p=>{
     const gone=state.gone.has(p.key);
+    const mine=gone&&state.gone.get(p.key)?.mine===true;
     if(state.view==='starred'&&!p.starred)return false;
     if(state.view==='gone'&&!gone)return false;
+    if(state.view==='mine'&&!mine)return false;
     if(state.q&&!`${p.yahoo_name||p.display_name} ${p.team||''} ${p.position||''}`.toLowerCase().includes(state.q))return false;
     return true;
   })}
@@ -42,14 +61,18 @@
     const goneCount=state.players.filter(p=>state.gone.has(p.key)).length;
     const avail=state.players.length-goneCount;
     const starredLeft=state.players.filter(p=>p.starred&&!state.gone.has(p.key)).length;
+    const mineCount=state.players.filter(p=>state.gone.get(p.key)?.mine===true).length;
     $('availableCount').textContent=avail;
     $('goneCount').textContent=goneCount;
     $('starCount').textContent=starredLeft;
     $('lastUpdate').textContent=state.lastChange?new Date(state.lastChange).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}):'—';
+    $('mineTab').hidden=state.mineSupported===false;
+    if(state.mineSupported!==false)$('mineTab').textContent=`MINE (${mineCount})`;
     const a=filtered();
     $('players').innerHTML=a.map(p=>{
       const gone=state.gone.has(p.key);
-      return `<article class="player ${p.starred?'starred':''} ${gone?'gone':''}"><div class="top"><span class="pos">${esc(p.position||'—')}</span><span class="rank">Yahoo #${esc(p.yahoo_rank)}</span></div><div class="name">${esc(p.yahoo_name||p.display_name)}</div><div class="meta">${esc(p.team||'')} ${gone?'· drafted':''}</div><div class="badges">${p.starred?'<span class="badge star">★ STARRED</span>':''}${gone?'<span class="badge gone">GONE</span>':''}</div>${gone?`<button class="undo" data-undo="${esc(p.player_key)}">UNDO</button>`:''}</article>`;
+      const mine=gone&&state.gone.get(p.key)?.mine===true;
+      return `<article class="player ${p.starred?'starred':''} ${gone?'gone':''} ${mine?'mine':''}"><div class="top"><span class="pos">${esc(p.position||'—')}</span><span class="rank">Yahoo #${esc(p.yahoo_rank)}</span></div><div class="name">${esc(p.yahoo_name||p.display_name)}</div><div class="meta">${esc(p.team||'')} ${gone?'· drafted':''}</div><div class="badges">${p.starred?'<span class="badge star">★ STARRED</span>':''}${gone?'<span class="badge gone">GONE</span>':''}${mine?'<span class="badge mine">YOUR PICK</span>':''}</div>${gone?`<button class="undo" data-undo="${esc(p.player_key)}">UNDO</button>`:''}</article>`;
     }).join('')||'<div class="empty">No players match this view.</div>';
     document.querySelectorAll('[data-undo]').forEach(b=>b.onclick=()=>undo(b.dataset.undo));
   }
