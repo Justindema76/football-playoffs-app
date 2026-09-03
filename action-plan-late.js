@@ -1,95 +1,158 @@
 (() => {
   'use strict';
 
-  const snake = (slot, round) => round % 2 ? ((round - 1) * 12 + slot) : (round * 12 - slot + 1);
-  const esc = v => String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const SB='https://bbodmhffnqebhfksjier.supabase.co';
+  const KEY='sb_publishable_L048cgw2gZwCeWmSWpUclA_cuKCSyQn';
+  const snake=(slot,round)=>round%2?((round-1)*12+slot):(round*12-slot+1);
+  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const norm=v=>String(v||'').toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g,' ').replace(/\b(jr|sr|ii|iii|iv)\b/g,' ').replace(/\s+/g,' ').trim();
 
-  const ROUNDS = {
-    6:{command:'CHECK VALUE — DO NOT FORCE QB/TE',priority:'If a QB stack or strong TE falls, take it. Otherwise keep adding RB/WR strength.',rows:[
-      ['QB IF FALL','Hurts · Lamar · Drake Maye · Burrow','Only if the price is clearly better than expected. Stack still matters.'],
-      ['TE VALUE','Tyler Warren','High-volume receiving role; one of the first non-Bowers/McBride TEs we actively consider.'],
-      ['RB','Rhamondre Stevenson — CURRENT LEAD VALUE · Jaylen Warren · TreVeyon Henderson only if healthy','Stevenson is currently the safer Patriots back while Henderson is sidelined. Treat it as a committee risk, not a workhorse lock.'],
-      ['WR','Brian Thomas Jr. · Marvin Harrison Jr. · Courtland Sutton','Mike Evans is OFF OUR BOARD. Keep taking usable WR value instead of injury risk.']
-    ]},
-    7:{command:'STACK CHECK + UPSIDE',priority:'If our WR created a QB stack, a falling QB can become worth it. Otherwise chase upside.',rows:[
-      ['QB STACK','Ladd → Herbert · Pickens/CeeDee → Dak','Take only when the stack price is right. No stack = no panic.'],
-      ['TE','Kyle Pitts · Harold Fannin','Real receiving upside. We want routes and targets, not just a TE name.'],
-      ['RB','Jonathon Brooks · Blake Corum','Brooks has takeover upside; Corum has standalone value plus elite handcuff value.'],
-      ['WR','Carnell Tate · Chris Godwin Jr.','Upside/role bets if they are still available.']
-    ]},
-    8:{command:'MAIN VALUE WINDOW STARTS',priority:'QB/TE can now be taken without feeling like we sacrificed the foundation — but only if the value is there.',rows:[
-      ['QB','Herbert if Ladd · Dak if Pickens/CeeDee · Daniels/Caleb if they fall','Stack first. If none fits, keep waiting.'],
-      ['TE','Pitts · Fannin · Dalton Kincaid · Kittle ONLY IF DISCOUNTED','Kincaid is a real target for us. Kittle requires TE2 insurance.'],
-      ['RB','Blake Corum · Jacory Croskey-Merritt · Rachaad White · Jordan Mason','Cheap paths to larger roles matter more than safe bench points.'],
-      ['WR','Chris Godwin Jr. · Jayden Reed · Josh Downs','Useful upside before the WR pool gets uglier.']
-    ]},
-    9:{command:'FAVORITE LATE-QB AREA',priority:'If QB is still open, attack value. If QB is filled, ignore QB names and take RB/WR/TE value.',rows:[
-      ['QB','Justin Herbert → Dak Prescott','Our preferred late QB pair. WR stack decides priority.'],
-      ['TE','Kincaid · Pitts · Fannin · Kittle if he really falls','Several legitimate starters remain. Do not panic.'],
-      ['RB','Corum · Croskey-Merritt · Rachaad White · Kenny Gainwell','Bench RBs need a path to touches.'],
-      ['WR','Jordan Addison · Romeo Doubs · Wan’Dale Robinson · Makai Lemon','Depth with real target paths.']
-    ]},
-    10:{command:'FINISH QB/TE OR TAKE A SLEEPER',priority:'Fill a missing starter only when the value is there. Otherwise take the best role-jump candidate.',rows:[
-      ['QB','Trevor Lawrence · Stafford if Puka','Lawrence is one of our favorite late values. Stafford requires QB2 insurance.'],
-      ['TE','Dallas Goedert · Isaiah Likely · Kincaid · Travis Kelce','Goedert has a clearer target path with A.J. Brown gone. Likely needs TE2 insurance.'],
-      ['RB','Chris Rodriguez Jr. · Jonah Coleman · Mike Washington Jr.','Cheap backs with opportunity paths.'],
-      ['WR','Stefon Diggs · Jordyn Tyson','Late-value/sleeper types with plausible volume.']
-    ]},
-    11:{command:'BENCH UPSIDE > SAFE DEPTH',priority:'Do not draft boring veterans just because you recognize the name. We want possible weekly starters.',rows:[
-      ['QB2 IF NEEDED','Trevor Lawrence → Brock Purdy → Bo Nix','Only for Stafford/risky QB1 or an absurd fall.'],
-      ['TE','Goedert · Likely · Jake Ferguson · Kincaid if he falls','If Kittle/Likely is TE1, start thinking TE2.'],
-      ['RB','Tank Bigsby · MarShawn Lloyd · Blake Corum if somehow there','Contingency/takeover bets.'],
-      ['WR','Rashid Shaheed · Romeo Doubs · Tre Tucker · Xavier Worthy','Boom/upside or a real route to more targets.']
-    ]},
-    12:{command:'HANDCUFFS + SECOND-CHANCE TEs',priority:'Protect important RBs and take late TE shots if we waited.',rows:[
-      ['RB','Emmett Johnson · Zach Charbonnet · Tyjae Spears · Dylan Sampson','One depth-chart change can make these players matter immediately.'],
-      ['TE','Goedert · Kincaid · Chig Okonkwo · Brenton Strange','TE1 value if ignored or TE2 insurance if needed.'],
-      ['WR','Denzel Boston · Dontayvion Wicks · Tre Tucker','Young/ascending or role-change bets.'],
-      ['RULE','Safe QB1 + safe TE1 already rostered','Take RB/WR upside. Do NOT manufacture QB2/TE2 needs.']
-    ]},
-    13:{command:'LOTTERY TICKETS',priority:'Ceiling matters more than projected Week 1 points.',rows:[
-      ['COOK HANDCUFF','Ray Davis','If we drafted James Cook, Davis becomes a priority.'],
-      ['RB','Tyler Allgeier · Braelon Allen · Tank Bigsby · Kaelon Black','Backups with a path to major workload.'],
-      ['TE2','Chig Okonkwo · Brenton Strange · Juwan Johnson','Only if TE1 needs insurance or we waited extremely late.'],
-      ['WR','Kayshon Boutte · Tank Dell · Ja’Kobi Lane','Late upside shots; cut quickly if the role does not develop.']
-    ]},
-    14:{command:'LAST SKILL PLAYER BEFORE DEF/K',priority:'If a real upside skill player remains, take him before defense.',rows:[
-      ['RB','Ray Davis · Allgeier · Braelon Allen · Kaelon Black','Prefer the handcuff tied to OUR roster.'],
-      ['WR','De’Zhaun Stribling · Chris Bell · best remaining upside WR','Need a path to targets or a role change.'],
-      ['TE','Chig · Brenton Strange · Juwan Johnson','Only if TE remains unresolved.'],
-      ['DEF','Only if skill value is exhausted','Defense can enter here; still replaceable.']
-    ]},
-    15:{command:'DEF / K — OR ONE LAST UPSIDE SHOT',priority:'Do not sacrifice earlier upside for replaceable positions.',rows:[
-      ['DEF','Best Week 1 matchup','Streaming is fine.'],
-      ['K','Good offense / stable role','Final-round position.'],
-      ['SKILL FALL','Any approved handcuff/sleeper who somehow remains','Take the upside player if league rules let us solve DEF/K afterward.'],
-      ['REMEMBER','Live chat overrides this board','Tell me your slot + every pick and I will narrow the next list to the actual roster and board.']
-    ]}
+  // Only players on draft_target_selection are allowed to render as recommendations.
+  // If research finds a new late sleeper, it stays OUT until Justin stars/adds him.
+  const FALLBACK_TARGETS=new Set([
+    'rhamondre stevenson','jonathon brooks','jk dobbins','blake corum','chuba hubbard','jordan mason','rj harvey','rachaad white','aaron jones','keaton mitchell','marshawn lloyd','woody marks','tyler allgeier','braelon allen','brian robinson','justice hill',
+    'brian thomas','marvin harrison','dk metcalf','chris godwin','stefon diggs','jordan addison','courtland sutton','jakobi meyers','rashid shaheed','khalil shakir','keenan allen','deebo samuel','jalen mcmillan','jerry jeudy','malik washington','keon coleman',
+    'drake maye','jayden daniels','joe burrow','jalen hurts','caleb williams','justin herbert','trevor lawrence','dak prescott','brock purdy','matthew stafford','jared goff','patrick mahomes','jordan love','baker mayfield','sam darnold','cj stroud','daniel jones',
+    'tucker kraft','george kittle','dalton kincaid','dallas goedert','travis kelce','jake ferguson','dalton schultz','chig okonkwo','terrance ferguson','hunter henry','brenton strange','david njoku','brock bowers','trey mcbride','colston loveland','tyler warren',
+    'rams d st'
+  ].map(norm));
+
+  let targetSet=new Set(FALLBACK_TARGETS);
+  let syncState='fallback';
+
+  const ROUNDS={
+    6:{
+      command:'CHECK FALLS — DO NOT FORCE QB/TE',
+      priority:'The first question is always: did one of OUR targeted players fall below his normal price?',
+      rows:[
+        ['QB FALL',['Jalen Hurts','Drake Maye','Joe Burrow'],'Only if one falls well below expectation. Otherwise keep building RB/WR.'],
+        ['TE VALUE',['Tyler Warren'],'Our targeted receiving TE in this range if the room gives us the price.'],
+        ['RB VALUE',['Rhamondre Stevenson','Jonathon Brooks'],'Stevenson is current lead/value; Brooks is a targeted upside back if he falls.'],
+        ['WR FALL',['Brian Thomas Jr.','Marvin Harrison Jr.','DK Metcalf'],'These are targeted players — take the discount rather than forcing a position.']
+      ]
+    },
+    7:{
+      command:'STACK CHECK + TARGETED UPSIDE',
+      priority:'QB starts to enter only when the price or stack makes sense. The board still beats positional panic.',
+      rows:[
+        ['QB STACK',['Justin Herbert','Dak Prescott','Jayden Daniels','Caleb Williams'],'Herbert rises with Ladd; Dak rises with Pickens. Daniels/Caleb only if they fall.'],
+        ['TE',['Tucker Kraft','George Kittle'],'Kraft is targeted; Kittle only if the discount compensates for injury risk.'],
+        ['RB',['Jonathon Brooks','J.K. Dobbins','Blake Corum'],'All are already on your board. Corum has contingency upside; Brooks has role-growth upside.'],
+        ['WR',['DK Metcalf','Chris Godwin Jr.','Courtland Sutton'],'Use a targeted WR fall instead of reaching for QB/TE.']
+      ]
+    },
+    8:{
+      command:'MAIN QB/TE VALUE WINDOW OPENS',
+      priority:'This is an option window, not a command. If the targeted RB/WR is better, keep waiting.',
+      rows:[
+        ['QB',['Justin Herbert','Dak Prescott','Trevor Lawrence'],'Stack first; Lawrence is the preferred standalone/value fallback.'],
+        ['TE',['George Kittle','Tucker Kraft'],'Kittle only at discount. Kraft is a targeted alternative if healthy/value.'],
+        ['RB',['Blake Corum','Chuba Hubbard','Jordan Mason','RJ Harvey'],'Bench RBs need a path to more work. Every name here is on your board.'],
+        ['WR',['Chris Godwin Jr.','Stefon Diggs','Courtland Sutton','Jordan Addison'],'Take targeted volume/upside if QB/TE is not worth the pick.']
+      ]
+    },
+    9:{
+      command:'FAVORITE LATE-QB / KINCAID AREA',
+      priority:'If QB is still open, this is a strong attack point. Kincaid also enters the value conversation here.',
+      rows:[
+        ['QB',['Trevor Lawrence','Brock Purdy','Justin Herbert','Dak Prescott'],'Lawrence/Purdy are targeted values; Herbert/Dak depend on stack and fall.'],
+        ['TE',['Dalton Kincaid','George Kittle'],'Kincaid is specifically liked. Kittle remains discount-only.'],
+        ['RB',['Blake Corum','Jordan Mason','RJ Harvey','Rachaad White'],'Targeted RB depth with a route to usable touches.'],
+        ['WR',['Stefon Diggs','Jordan Addison','Courtland Sutton','Jakobi Meyers'],'Stay inside the starred pool.']
+      ]
+    },
+    10:{
+      command:'FINISH A STARTER ONLY IF VALUE IS THERE',
+      priority:'Do not fill QB/TE just because the roster box is empty. Compare the targeted options across positions.',
+      rows:[
+        ['QB',['Trevor Lawrence','Matthew Stafford','Brock Purdy'],'Stafford is primarily the Puka stack and needs QB2 insurance if used as QB1.'],
+        ['TE',['Dalton Kincaid','Dallas Goedert','Travis Kelce'],'Goedert is a real later TE option; Kincaid remains preferred if available.'],
+        ['RB',['Rachaad White','Aaron Jones','Keaton Mitchell','MarShawn Lloyd'],'Cheap targeted backs with workload/contingency paths.'],
+        ['WR',['Jakobi Meyers','Rashid Shaheed','Khalil Shakir'],'Targeted WR depth — no outside sleeper gets inserted automatically.']
+      ]
+    },
+    11:{
+      command:'BENCH UPSIDE > NAME RECOGNITION',
+      priority:'The bench should contain targeted players who can gain value, not random names we never approved.',
+      rows:[
+        ['QB2 IF NEEDED',['Trevor Lawrence','Brock Purdy'],'Only for Stafford/risky QB1 or an absurd fall. No automatic QB2.'],
+        ['TE',['Dallas Goedert','Jake Ferguson','Dalton Kincaid'],'If TE is unresolved, these are targeted options.'],
+        ['RB',['Aaron Jones','Keaton Mitchell','MarShawn Lloyd','Woody Marks'],'Use the player with the clearest path to touches or role growth.'],
+        ['WR',['Rashid Shaheed','Khalil Shakir','Keenan Allen','Deebo Samuel Sr.'],'All are already on the board; pick based on role/value at that moment.']
+      ]
+    },
+    12:{
+      command:'TARGETED DEPTH + SECOND-CHANCE TE',
+      priority:'This is where the selected late names matter. We are no longer guessing from famous names.',
+      rows:[
+        ['RB',['MarShawn Lloyd','Woody Marks','Tyler Allgeier','Braelon Allen'],'Contingency/upside from the actual starred pool.'],
+        ['TE',['Jake Ferguson','Dalton Schultz','Chig Okonkwo','Terrance Ferguson'],'Late targeted TE choices if the room ignored the position.'],
+        ['WR',['Rashid Shaheed','Khalil Shakir','Keenan Allen','Jalen McMillan'],'Take upside/role, not a random unstarred sleeper.'],
+        ['QB',['Jared Goff','Patrick Mahomes','Jordan Love','Baker Mayfield'],'Only if QB remains open or one has fallen far below cost.']
+      ]
+    },
+    13:{
+      command:'LOTTERY TICKETS — FROM YOUR BOARD',
+      priority:'Ceiling matters now, but the player still has to be someone you selected.',
+      rows:[
+        ['RB',['Tyler Allgeier','Braelon Allen','Brian Robinson','Justice Hill'],'Backups/role bets already approved on your board.'],
+        ['TE',['Chig Okonkwo','Terrance Ferguson','Hunter Henry','Brenton Strange'],'Late TE1/TE2 options only if needed.'],
+        ['WR',['Jalen McMillan','Keon Coleman','Malik Washington','Jerry Jeudy'],'These are your late WR lottery tickets, not outside names.'],
+        ['QB',['Baker Mayfield','Sam Darnold','C.J. Stroud','Daniel Jones'],'Emergency/value pool only; stack can elevate Stroud.']
+      ]
+    },
+    14:{
+      command:'LAST TARGETED SKILL UPSIDE',
+      priority:'Before defense/kicker, take another approved upside player if one is still worth rostering.',
+      rows:[
+        ['RB',['Tyler Allgeier','Braelon Allen','Brian Robinson','Justice Hill'],'Choose the one tied to your roster or clearest opportunity path.'],
+        ['WR',['Jalen McMillan','Keon Coleman','Malik Washington','Jerry Jeudy'],'Only targeted late WRs.'],
+        ['TE',['Chig Okonkwo','Terrance Ferguson','Hunter Henry','Brenton Strange'],'Only if TE is unresolved or insurance is justified.'],
+        ['DEF',['Rams D/ST'],'This is the defense you actually starred.']
+      ]
+    },
+    15:{
+      command:'DEF / K — OR LAST APPROVED UPSIDE SHOT',
+      priority:'Do not throw away a useful targeted skill player for a replaceable position if league rules let us wait.',
+      rows:[
+        ['DEF',['Rams D/ST'],'Targeted defense. If unavailable, stream the best Week 1 matchup.'],
+        ['SKILL',['Braelon Allen','Justice Hill','Jalen McMillan','Malik Washington'],'If one of our approved upside players is still there, he can beat a forced kicker pick.'],
+        ['RULE',[],'Live chat overrides this screen. Tell me every pick and I narrow the next choices from the remaining targeted board.']
+      ]
+    }
   };
 
-  const EXPANDED_TE = [
-    ['R2 FALL','BROCK BOWERS','Receiver-level usage from the TE slot. Do not force him ahead of value.'],
-    ['R3 FALL','TREY McBRIDE','Take the elite target-volume advantage if he reaches Round 3.'],
-    ['R4 VALUE','COLSTON LOVELAND','Receiving-weapon profile; consider before the late-TE tier.'],
-    ['R5–6','TYLER WARREN','Possession-volume upside.'],
-    ['R7–9','KYLE PITTS','Receiving ceiling at a cheaper cost than the elite tier.'],
-    ['R7–10','HAROLD FANNIN','High-volume upside.'],
-    ['R8–10','DALTON KINCAID','We like him as a legitimate TE1 target, not merely insurance.'],
-    ['R9–12','DALLAS GOEDERT','Useful last year; A.J. Brown is gone, improving the target path.'],
-    ['R9+ FALL','GEORGE KITTLE','Discount only because of injury risk; add TE2 if he is TE1.'],
-    ['R10–12','ISAIAH LIKELY','Late upside; add TE2 if he is TE1.'],
-    ['LATE','TRAVIS KELCE · JAKE FERGUSON','Veteran/value fallbacks.'],
-    ['TE2 / DEEP','CHIG OKONKWO · BRENTON STRANGE · JUWAN JOHNSON','Insurance or extreme late solutions.'],
-    ['OFF BOARD','SAM LaPORTA','Do not recommend him for our build.']
+  const TE_BOARD=[
+    ['R2 FALL',['Brock Bowers'],'Receiver-level usage from the TE slot.'],
+    ['R3 FALL',['Trey McBride'],'Receiver-level target volume.'],
+    ['R4 VALUE',['Colston Loveland'],'Targeted receiving-upside TE.'],
+    ['R5-6',['Tyler Warren'],'Targeted volume option.'],
+    ['R6-8',['Tucker Kraft'],'Targeted option; use only if health/value lines up.'],
+    ['R8+ FALL',['George Kittle'],'Discount only because of injury risk.'],
+    ['R9-11',['Dalton Kincaid'],'A TE we specifically like at the later price.'],
+    ['R10-12',['Dallas Goedert'],'Useful target path and already on your board.'],
+    ['LATE',['Travis Kelce','Jake Ferguson','Dalton Schultz'],'Targeted veteran/value fallbacks.'],
+    ['DEEP',['Chig Okonkwo','Terrance Ferguson','Hunter Henry','Brenton Strange','David Njoku'],'Only if TE is still unresolved or justified insurance.']
   ];
 
-  const escHtml = s => esc(s);
+  function isTargeted(name){return targetSet.has(norm(name))}
+  function targeted(names){return (names||[]).filter(isTargeted)}
+
+  async function syncTargets(){
+    try{
+      const r=await fetch(`${SB}/rest/v1/draft_target_selection?select=player_key,user_target&user_target=eq.true`,{headers:{apikey:KEY,Authorization:`Bearer ${KEY}`}});
+      if(!r.ok) throw Error(String(r.status));
+      const rows=await r.json();
+      const live=new Set(rows.map(x=>norm(x.player_key)).filter(Boolean));
+      if(live.size){targetSet=live;syncState='live'}
+    }catch(_){syncState='fallback'}
+  }
 
   function injectStyles(){
-    if(document.getElementById('lateDecisionStyles')) return;
-    const style=document.createElement('style');
-    style.id='lateDecisionStyles';
-    style.textContent=`
+    if(document.getElementById('lateDecisionStyles'))return;
+    const s=document.createElement('style');
+    s.id='lateDecisionStyles';
+    s.textContent=`
       .late-decision-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:12px 0 18px}
       .late-decision-card{border:1px solid #cad5e2;border-radius:15px;background:#fff;overflow:hidden;box-shadow:0 2px 5px rgba(15,23,42,.05)}
       .late-decision-head{display:flex;justify-content:space-between;align-items:center;background:#10233f;color:#fff;padding:11px 14px}
@@ -98,46 +161,47 @@
       .late-decision-priority{padding:0 14px 11px;color:#475569;font-size:12px;font-weight:800;line-height:1.4}
       .late-decision-row{display:grid;grid-template-columns:105px 1fr;border-top:1px solid #e2e8f0;padding:10px 14px;gap:10px;align-items:start}
       .late-decision-row b{font-size:12px;color:#174a73}.late-decision-row strong{display:block;font-size:14px;line-height:1.3}.late-decision-row small{display:block;margin-top:3px;color:#64748b;font-size:11px;line-height:1.35;font-weight:750}
-      .late-decision-note{background:#fee2e2;border:2px solid #b42318;border-radius:14px;padding:12px 15px;margin:12px 0;font-weight:950;color:#991b1b}
+      .late-decision-note{background:#fff2cc;border:2px solid #d6b656;border-radius:14px;padding:13px 15px;margin:12px 0;font-weight:900;line-height:1.4}
+      .target-sync{font-size:11px;font-weight:950;color:#166534;margin-left:8px}
       .late-te-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:10px 0 18px}
       .late-te-item{background:#f3e8ff;border:1px solid #d8b4fe;border-radius:11px;padding:10px 12px}
       .late-te-item b{display:block;font-size:11px;color:#7e22ce}.late-te-item strong{display:block;font-size:14px;margin-top:2px}.late-te-item small{display:block;color:#64748b;font-size:11px;margin-top:3px;line-height:1.35}
       @media(max-width:900px){.late-decision-grid,.late-te-grid{grid-template-columns:1fr}.late-decision-row{grid-template-columns:90px 1fr}}
     `;
-    document.head.appendChild(style);
+    document.head.appendChild(s);
   }
 
   function currentSlot(){
     const active=document.querySelector('#slotTabs button.active');
-    return Number(active?.dataset.slot || 1);
+    return Number(active?.dataset.slot||1);
+  }
+
+  function renderRows(rows){
+    return rows.map(([label,names,why])=>{
+      const kept=targeted(names);
+      if(names.length&&!kept.length)return '';
+      const title=kept.length?kept.join(' · '):'LIVE DRAFT RULE';
+      return `<div class="late-decision-row"><b>${esc(label)}</b><div><strong>${esc(title)}</strong><small>${esc(why)}</small></div></div>`;
+    }).join('');
   }
 
   function renderLateDecision(){
     const panel=document.getElementById('lateDecisionPanel');
-    if(!panel) return;
+    if(!panel)return;
     const slot=currentSlot();
-    panel.querySelector('#lateDecisionSlot').textContent=`PICK ${slot} · R6 #${snake(slot,6)} → R15 #${snake(slot,15)}`;
-    panel.querySelector('#lateDecisionGrid').innerHTML=Object.entries(ROUNDS).map(([round,data])=>{
-      const rows=data.rows.map(([label,names,why])=>`<div class="late-decision-row"><b>${escHtml(label)}</b><div><strong>${escHtml(names)}</strong><small>${escHtml(why)}</small></div></div>`).join('');
-      return `<article class="late-decision-card"><div class="late-decision-head"><strong>ROUND ${round}</strong><span>YOUR PICK #${snake(slot,Number(round))}</span></div><div class="late-decision-command">${escHtml(data.command)}</div><div class="late-decision-priority">${escHtml(data.priority)}</div>${rows}</article>`;
-    }).join('');
+    panel.querySelector('#lateDecisionGrid').innerHTML=Object.entries(ROUNDS).map(([round,data])=>`<article class="late-decision-card"><div class="late-decision-head"><strong>ROUND ${round}</strong><span>YOUR PICK #${snake(slot,Number(round))}</span></div><div class="late-decision-command">${esc(data.command)}</div><div class="late-decision-priority">${esc(data.priority)}</div>${renderRows(data.rows)}</article>`).join('');
+    panel.querySelector('#lateDecisionSlot').innerHTML=`PICK ${slot} · R6 #${snake(slot,6)} → R15 #${snake(slot,15)} <span class="target-sync">${syncState==='live'?'LIVE STARRED BOARD':'STARRED BOARD FALLBACK'}</span>`;
   }
 
   function renderExpandedTE(){
-    const html=EXPANDED_TE.map(([window,name,why])=>`<div class="late-te-item"><b>${escHtml(window)}</b><strong>${escHtml(name)}</strong><small>${escHtml(why)}</small></div>`).join('');
+    const html=TE_BOARD.map(([window,names,why])=>{
+      const kept=targeted(names);
+      if(!kept.length)return '';
+      return `<div class="late-te-item"><b>${esc(window)}</b><strong>${esc(kept.join(' · '))}</strong><small>${esc(why)}</small></div>`;
+    }).join('');
+    document.getElementById('expandedTeBoard')?.replaceChildren();
     const target=document.getElementById('expandedTeBoard');
-    if(target) target.innerHTML=html;
-    const teFull=document.getElementById('teFull');
-    if(teFull) teFull.innerHTML=EXPANDED_TE.map(([window,name,why])=>`<div class="ladder-row"><b>${escHtml(window)}</b><span>${escHtml(name)}<br><small>${escHtml(why)}</small></span></div>`).join('');
-  }
-
-  function addMikeEvansAvoid(){
-    const noCard=document.querySelector('#boardPanel .board-card.no');
-    if(!noCard || noCard.textContent.includes('MIKE EVANS')) return;
-    const item=document.createElement('div');
-    item.className='board-item';
-    item.innerHTML='MIKE EVANS<small>OFF OUR BOARD — recurring quad/groin issues, injury-plagued 2025 and too much downside for this build.</small>';
-    noCard.appendChild(item);
+    if(target)target.innerHTML=html;
   }
 
   function showLateDecision(button){
@@ -146,49 +210,35 @@
     document.getElementById('lateDecisionPanel')?.classList.add('active');
     button?.classList.add('active');
     const slotShell=document.getElementById('slotShell');
-    if(slotShell) slotShell.style.display='flex';
+    if(slotShell)slotShell.style.display='flex';
     renderLateDecision();
   }
 
-  document.addEventListener('DOMContentLoaded',()=>{
+  document.addEventListener('DOMContentLoaded',async()=>{
     injectStyles();
-    const tabs=document.getElementById('sheetTabs');
     const main=document.querySelector('main.guide');
     const latePanel=document.getElementById('latePanel');
-    const qbTePanel=document.getElementById('qbTePanel');
-    if(!tabs || !main || !latePanel) return;
+    const tabs=document.getElementById('sheetTabs');
+    if(!main||!latePanel||!tabs)return;
 
-    let panel=document.getElementById('lateDecisionPanel');
-    if(!panel){
-      panel=document.createElement('section');
-      panel.id='lateDecisionPanel';
-      panel.className='panel-only';
-      panel.innerHTML=`<div class="hero-rule"><div><strong>ROUNDS 6–15 DECISION BOARD</strong><span>Current Intel + our personal board. Check the fall before forcing QB/TE.</span></div><div id="lateDecisionSlot" class="hero-picks"></div></div><div class="late-decision-note">OFF OUR BOARD: MIKE EVANS · SAQUON BARKLEY · KENNETH WALKER · SAM LaPORTA</div><section id="lateDecisionGrid" class="late-decision-grid"></section>`;
-      main.insertBefore(panel,latePanel);
-    }
+    const panel=document.createElement('section');
+    panel.id='lateDecisionPanel';
+    panel.className='panel-only';
+    panel.innerHTML=`<div class="hero-rule"><div><strong>ROUNDS 6–15 — YOUR STARRED PLAYERS ONLY</strong><span>No unselected player can appear as a recommendation. New research stays outside the plan until you add the player to your board.</span></div><div id="lateDecisionSlot" class="hero-picks"></div></div><div class="late-decision-note"><b>HOW TO USE THIS:</b> compare the targeted players who actually remain. QB/TE are value options — not automatic Round 6/7 picks. During the live draft, your roster and the players already taken override this static screen.</div><section id="lateDecisionGrid" class="late-decision-grid"></section><h2 style="margin:18px 0 8px">TARGETED TE FALLBACK BOARD</h2><section id="expandedTeBoard" class="late-te-grid"></section>`;
+    latePanel.before(panel);
 
-    let btn=tabs.querySelector('[data-tab="lateDecision"]');
-    if(!btn){
-      btn=document.createElement('button');
-      btn.type='button';
-      btn.dataset.tab='lateDecision';
-      btn.textContent='R6–15 DECISION BOARD';
-      tabs.appendChild(btn);
-    }
+    const btn=document.createElement('button');
+    btn.type='button';
+    btn.dataset.tab='lateDecision';
+    btn.textContent='R6–15 DECISION BOARD';
+    const lateBtn=tabs.querySelector('button[data-tab="late"]');
+    if(lateBtn)tabs.insertBefore(btn,lateBtn);else tabs.appendChild(btn);
     btn.addEventListener('click',()=>showLateDecision(btn));
 
-    tabs.querySelectorAll('button:not([data-tab="lateDecision"])').forEach(b=>b.addEventListener('click',()=>panel.classList.remove('active')));
-    document.querySelectorAll('#slotTabs button').forEach(b=>b.addEventListener('click',()=>setTimeout(()=>{if(panel.classList.contains('active'))renderLateDecision();},0)));
+    document.querySelectorAll('#slotTabs button').forEach(b=>b.addEventListener('click',()=>setTimeout(()=>{if(panel.classList.contains('active'))renderLateDecision()},0)));
 
-    if(qbTePanel && !document.getElementById('expandedTeBoard')){
-      const block=document.createElement('section');
-      block.innerHTML='<h2 style="margin:18px 0 8px">EXPANDED TE BOARD</h2><div id="expandedTeBoard" class="late-te-grid"></div>';
-      qbTePanel.appendChild(block);
-    }
-
-    renderExpandedTE();
+    await syncTargets();
     renderLateDecision();
-    setTimeout(addMikeEvansAvoid,0);
-    tabs.querySelector('[data-tab="board"]')?.addEventListener('click',()=>setTimeout(addMikeEvansAvoid,0));
+    renderExpandedTE();
   });
 })();
