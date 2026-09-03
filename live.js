@@ -18,7 +18,13 @@
       ]);
       const tm=new Map((targets||[]).map(x=>[norm(x.player_key),!!x.user_target]));
       state.gone=new Map((live||[]).map(x=>[norm(x.player_key),x]));
-      state.players=(catalog||[]).filter(p=>Number.isFinite(Number(p.yahoo_rank))).map(p=>({...p,key:norm(p.player_key),starred:tm.get(norm(p.player_key))===true})).sort((a,b)=>Number(a.yahoo_rank)-Number(b.yahoo_rank));
+      // p.yahoo_rank must be checked for null/undefined BEFORE the Number()
+      // coercion below -- Number(null) is 0, not NaN, so a catalog row with
+      // no rank was passing isFinite() and sorting to the very front of the
+      // list (ahead of the real #1) instead of being excluded like it
+      // should be. That's what put rankless rows like Justice Hill and
+      // George Holani above Jahmyr Gibbs.
+      state.players=(catalog||[]).filter(p=>p.yahoo_rank!=null&&Number.isFinite(Number(p.yahoo_rank))).map(p=>({...p,key:norm(p.player_key),starred:tm.get(norm(p.player_key))===true})).sort((a,b)=>Number(a.yahoo_rank)-Number(b.yahoo_rank));
       state.lastChange=(live||[])[0]?.drafted_at||state.lastChange;
       $('syncStatus').className='status live';$('syncStatus').textContent='LIVE';
       $('notice').hidden=true;
