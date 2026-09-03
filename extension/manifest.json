@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Fantasy Football 2026 Live Sync",
-  "version": "1.0.3",
-  "description": "Reads the open Yahoo draft page, syncs drafted players, and publishes your draft slot to the live viewer.",
+  "version": "1.0.8",
+  "description": "Reads Yahoo draft picks without taking over Queue, syncs drafted players, and publishes your draft slot.",
   "permissions": ["storage", "activeTab"],
   "host_permissions": [
     "https://football.fantasysports.yahoo.com/*",
@@ -11,7 +11,7 @@
   "content_scripts": [
     {
       "matches": ["https://football.fantasysports.yahoo.com/*"],
-      "js": ["content.js", "session.js"],
+      "js": ["content.js"],
       "run_at": "document_idle"
     }
   ],
