@@ -123,7 +123,7 @@
     const star=p.source==='TARGET'?'★ ':'';
     const source=p.source==='TARGET'?'YOUR TARGET':p.source==='INTEL'?'INTEL':'EXPERT';
     const rankLabel=p.source==='EXPERT'?'E#':'Y#';
-    return `<div class="position-option"><div class="position-name">${star}${esc(p.name)}</div><div class="position-meta">${rankLabel}${p.rank} · ${esc(p.status)} · ${source}</div></div>`;
+    return `<div class="position-option"><div class="position-name">${star}${esc(p.name)}</div><div class="position-meta"><b>TIER ${p.tier}</b> · ${rankLabel}${p.rank} · ${esc(p.status)} · ${source}</div></div>`;
   }
 
   function positionBox(pos,result){
