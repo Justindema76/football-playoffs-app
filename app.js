@@ -8,15 +8,15 @@
   const TIER_COUNT=15;
   const FILTERS=['ALL','QB','RB','WR','TE','DEF','K','STARRED','INTEL','INJURY'];
   const POSITION_PANEL_FILTERS=['ALL','STARRED','INTEL','INJURY'];
-  const POSITION_FILTERS=new Set(['QB','RB','WR','TE','DEF','K']);
   const FILTER_VIEWS=new Set(['players','draft','intel','runningbacks','widereceivers','injuries']);
   const state={view:'draft',pos:'ALL',q:'',players:[],intel:[],weather:[],owner:[],suggestions:[],errors:[]};
   const $=id=>document.getElementById(id);
+  const playersApi=window.FantasyPlayers;
   const intelApi=window.FantasyIntel;
   const runningBacksApi=window.FantasyRunningBacks;
   const wideReceiversApi=window.FantasyWideReceivers;
 
-  if(!intelApi||!runningBacksApi||!wideReceiversApi){
+  if(!playersApi||!intelApi||!runningBacksApi||!wideReceiversApi){
     console.error('Feature modules failed to load.');
     const n=$('notice');
     if(n){n.hidden=false;n.textContent='A fantasy feature module failed to load. Refresh the page.'}
@@ -25,10 +25,6 @@
 
   const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const normPos=v=>{const p=String(v||'').toUpperCase();return ['QB','RB','WR','TE','DEF','K'].includes(p)?p:'X'};
-  const sortYahoo=(a,b)=>(Number(a.yahoo_rank)||9999)-(Number(b.yahoo_rank)||9999)||String(a.yahoo_name||a.display_name||'').localeCompare(String(b.yahoo_name||b.display_name||''));
-  const uniq=a=>[...new Set(a.filter(Boolean).map(x=>String(x).trim().toUpperCase()).filter(Boolean))];
-  const normName=v=>String(v||'').toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g,' ').replace(/\b(jr|sr|ii|iii|iv)\b/g,' ').replace(/\s+/g,' ').trim();
-  const normKey=v=>normName(v);
   const suggestionSort=(a,b)=>new Date(b.source_date||b.created_at||0)-new Date(a.source_date||a.created_at||0);
 
   const tagClass=t=>{
@@ -44,30 +40,7 @@
   }
   async function safe(name,path){try{return{name,data:await api(path),error:null}}catch(error){return{name,data:[],error}}}
   function setSync(s,t){$('syncPill').dataset.state=s;$('syncText').textContent=t}
-
-  function tags(p){
-    return uniq([
-      ...(p.user_tags||[]),
-      ...(p.planner_tags||[]),
-      ...(intelApi.tagsFromItems(p.intel_items||[])||[]),
-      p.user_target?'TARGET':null
-    ]);
-  }
-
-  function isInjuryPlayer(p){return intelApi.isInjuryPlayer(p)||false}
-
-  function matches(p){
-    if(POSITION_FILTERS.has(state.pos)&&normPos(p.position)!==state.pos)return false;
-    if(state.pos==='STARRED'&&!p.user_target)return false;
-    if(state.pos==='INTEL'&&!(p.intel_items||[]).length)return false;
-    if(state.pos==='INJURY'&&!isInjuryPlayer(p))return false;
-    if(!state.q)return true;
-    const suggestions=p.suggestions||[];
-    const core=[p.yahoo_name,p.display_name,p.team,p.position,p.planner_reason,...(p.planner_tags||[])].join(' ').toLowerCase().includes(state.q);
-    const intel=intelApi.matchesSearch(p.intel_items||[],state.q);
-    const research=suggestions.some(s=>[s.suggestion_type,s.sentiment,s.note,s.source_context,s.source_name,s.suggested_round].join(' ').toLowerCase().includes(state.q));
-    return core||intel||research;
-  }
+  const matches=player=>playersApi.matches(player,state,intelApi);
 
   async function load(){
     setSync('loading','SYNCING');
@@ -84,29 +57,7 @@
     const R=Object.fromEntries(rs.map(x=>[x.name,x]));
     state.intel=intelApi.sort(R.intel.data);
     state.suggestions=R.suggestions.data.slice().sort(suggestionSort);
-
-    const targetMap=new Map(R.targets.data.map(x=>[normKey(x.player_key),x]));
-    const plannerByKey=new Map(R.planner.data.map(x=>[normKey(x.player_key),x]));
-    const plannerByName=new Map(R.planner.data.map(x=>[normName(x.player_name),x]));
-    const intelByName=intelApi.groupByName(state.intel,normName);
-    const suggestionsByKey=new Map();
-    state.suggestions.forEach(row=>{
-      const key=normKey(row.player_key);
-      if(!key)return;
-      if(!suggestionsByKey.has(key))suggestionsByKey.set(key,[]);
-      suggestionsByKey.get(key).push(row);
-    });
-
-    state.players=R.catalog.data.map(p=>{
-      const key=normKey(p.player_key);
-      const name=normName(p.yahoo_name||p.display_name);
-      const t=targetMap.get(key)||{};
-      const plan=plannerByKey.get(key)||plannerByName.get(name)||{};
-      const intel=intelByName.get(name)||[];
-      const suggestions=(suggestionsByKey.get(key)||suggestionsByKey.get(name)||[]).slice().sort(suggestionSort);
-      return {...p,tier:intelApi.tierFor(p),user_target:!!t.user_target,user_tags:t.user_tags||[],user_note:t.user_note||null,planner_tags:plan.tags||[],planner_reason:plan.reason||'',planner_last_confirmed_date:plan.last_confirmed_date||null,planner_updated_at:plan.updated_at||null,intel_items:intel,suggestions};
-    }).sort(sortYahoo);
-
+    state.players=playersApi.build({catalog:R.catalog.data,targets:R.targets.data,planner:R.planner.data,intel:state.intel,suggestions:state.suggestions,intelApi});
     state.weather=R.weather.data;
     state.owner=R.owner.data;
     state.errors=rs.filter(x=>x.error).map(x=>x.name);
@@ -143,12 +94,12 @@
     if(state.view==='draft')return renderDraft();
     if(state.view==='intel')return intelApi.render({state,$,esc,normPos,tagClass,matches});
     if(state.view==='weather')return renderWeather();
-    if(state.view==='runningbacks')return runningBacksApi.render({state,$,esc,tagClass,intelApi,bindTargets});
-    if(state.view==='widereceivers')return wideReceiversApi.render({state,$,esc,tagClass,intelApi,bindTargets});
+    if(state.view==='runningbacks')return runningBacksApi.render({state,$,esc,tagClass,intelApi,playersApi,bindTargets});
+    if(state.view==='widereceivers')return wideReceiversApi.render({state,$,esc,tagClass,intelApi,playersApi,bindTargets});
     return renderTagged();
   }
 
-  function visiblePlayers(targetOnly=false){return state.players.filter(p=>(!targetOnly||p.user_target)&&matches(p)).sort(sortYahoo)}
+  function visiblePlayers(targetOnly=false){return state.players.filter(p=>(!targetOnly||p.user_target)&&matches(p)).sort(playersApi.sortYahoo)}
 
   function renderPlayerContext(p){
     const suggestions=p.suggestions||[];
@@ -163,14 +114,14 @@
   function renderPlayers(targetOnly){
     const a=visiblePlayers(targetOnly);
     $('pageMeta').textContent=`${a.length} canonical Yahoo players`;
-    $('content').innerHTML=`${targetOnly?'':`<div class="player-toolbar"><span class="source-badge">Same canonical player record used by Players + Draft + Running Backs + Wide Receivers + Intel</span><button id="addMissing" class="add-missing">+ ADD MISSING YAHOO PLAYER</button></div>`}<div class="list">${a.map(playerCard).join('')||'<div class="empty">No players match.</div>'}</div>`;
+    $('content').innerHTML=`${targetOnly?'':`<div class="player-toolbar"><span class="source-badge">ONE PLAYER MODEL · Players + Draft + RB + WR + Intel</span><button id="addMissing" class="add-missing">+ ADD MISSING YAHOO PLAYER</button></div>`}<div class="list">${a.map(playerCard).join('')||'<div class="empty">No players match.</div>'}</div>`;
     bindTargets();
     if(!targetOnly)$('addMissing')?.addEventListener('click',openManual);
   }
 
   function playerCard(p){
-    const po=normPos(p.position),ts=tags(p);
-    return `<article class="player-card ${p.user_target?'targeted':''}"><div class="card-top"><span class="pos ${po}">${po}</span><div style="display:flex;gap:7px;align-items:center"><span class="tier-badge">TIER ${esc(p.tier??'—')}</span><span class="rank">Yahoo #${esc(p.yahoo_rank??'—')}</span><button class="target-button ${p.user_target?'on':''}" data-key="${esc(p.player_key)}" data-target="${p.user_target?'false':'true'}">${p.user_target?'TARGETED':'TARGET'}</button></div></div><div class="player-name">${esc(p.yahoo_name||p.display_name)}</div><div class="player-team-line"><span class="team-badge">${esc(p.team||'FA')}</span><span class="player-meta">Yahoo ranking order</span></div>${ts.length?`<div class="tags">${ts.map(t=>`<span class="tag ${tagClass(t)}">${esc(t)}</span>`).join('')}</div>`:''}${renderPlayerContext(p)}</article>`;
+    const po=normPos(p.position),ts=playersApi.allTags(p);
+    return `<article class="player-card ${p.user_target?'targeted':''}"><div class="card-top"><span class="pos ${po}">${po}</span><div style="display:flex;gap:7px;align-items:center"><span class="tier-badge">TIER ${esc(p.tier??'—')}</span><span class="rank">Yahoo #${esc(p.yahoo_rank??'—')}</span><button class="target-button ${p.user_target?'on':''}" data-key="${esc(p.player_key)}" data-target="${p.user_target?'false':'true'}">${p.user_target?'TARGETED':'TARGET'}</button></div></div><div class="player-name">${esc(p.yahoo_name||p.display_name)}</div><div class="player-team-line"><span class="team-badge">${esc(p.team||'FA')}</span><span class="player-meta">${esc(p.source||'Yahoo player catalog')}</span></div>${ts.length?`<div class="tags">${ts.map(t=>`<span class="tag ${tagClass(t)}">${esc(t)}</span>`).join('')}</div>`:''}${renderPlayerContext(p)}</article>`;
   }
 
   function bindTargets(){$('content').querySelectorAll('.target-button').forEach(b=>b.onclick=()=>toggleTarget(b.dataset.key,b.dataset.target==='true'))}
@@ -182,32 +133,24 @@
     catch(e){localStorage.removeItem(APP_KEY);alert('Target update failed. Re-enter the app key.');openKey()}
   }
 
-  function catalogGaps(all){
-    const ranks=new Set(all.map(p=>Number(p.yahoo_rank)).filter(n=>Number.isInteger(n)&&n>0));
-    const maxRank=Math.max(0,...ranks);
-    const gaps=[];
-    for(let r=1;r<=maxRank;r++)if(!ranks.has(r))gaps.push(r);
-    return gaps;
-  }
-
   function renderDraft(){
-    const all=state.players.slice().sort(sortYahoo);
+    const all=state.players.slice().sort(playersApi.sortYahoo);
     const shown=all.filter(matches);
     const targeted=all.filter(p=>p.user_target).length;
-    const gaps=catalogGaps(all);
+    const gaps=playersApi.catalogGaps(all);
     $('pageMeta').textContent=`${shown.length} Yahoo players shown · ${targeted} starred · 15 rounds · 12 picks per round`;
     if(!all.length){$('content').innerHTML='<div class="empty">No Yahoo players synced yet.</div>';return}
-    const tiers=Array.from({length:TIER_COUNT},(_,i)=>{const n=i+1;return shown.filter(p=>p.tier===n)});
+    const tiers=Array.from({length:TIER_COUNT},(_,i)=>shown.filter(p=>p.tier===i+1));
     const late=shown.filter(p=>!p.tier||p.tier>TIER_COUNT);
-    const warning=gaps.length?`<div class="catalog-error catalog-warning"><b>YAHOO RANK VERIFICATION IN PROGRESS</b><span>Draft remains available. Unverified/missing Yahoo rank${gaps.length===1?'':'s'}: ${gaps.slice(0,12).map(r=>`#${r}`).join(', ')}${gaps.length>12?'…':''}. Verified players keep their Yahoo position and tier.</span></div>`:'';
-    $('content').innerHTML=`${warning}<div class="draft-summary"><div><span>YAHOO PLAYERS</span><b>${all.length}</b></div><div><span>STARRED</span><b>${targeted}</b></div><div><span>ROUNDS</span><b>${TIER_COUNT}</b></div><div><span>ORDER</span><b>YAHOO</b></div></div><div class="tier-grid">${tiers.map((g,i)=>tier(i+1,g)).join('')}</div>${late.length?`<section class="late-pool"><div class="late-pool-head"><b>UNRANKED / LATE POOL</b><span>${late.length} players</span></div><div class="late-grid">${late.map(draftRow).join('')}</div></section>`:''}`;
+    const warning=gaps.length?`<div class="catalog-error catalog-warning"><b>YAHOO RANK VERIFICATION IN PROGRESS</b><span>Draft remains available. Unverified/missing Yahoo rank${gaps.length===1?'':'s'}: ${gaps.slice(0,12).map(r=>`#${r}`).join(', ')}${gaps.length>12?'…':''}. Verified players keep their Yahoo Pre-Season rank and tier.</span></div>`:'';
+    $('content').innerHTML=`${warning}<div class="draft-summary"><div><span>YAHOO PLAYERS</span><b>${all.length}</b></div><div><span>STARRED</span><b>${targeted}</b></div><div><span>ROUNDS</span><b>${TIER_COUNT}</b></div><div><span>ORDER</span><b>YAHOO PRE-SEASON</b></div></div><div class="tier-grid">${tiers.map((g,i)=>tier(i+1,g)).join('')}</div>${late.length?`<section class="late-pool"><div class="late-pool-head"><b>UNRANKED / LATE POOL</b><span>${late.length} players</span></div><div class="late-grid">${late.map(draftRow).join('')}</div></section>`:''}`;
     bindTargets();
   }
 
   function tier(n,a){const start=(n-1)*12+1,end=start+11;return `<section class="tier"><div class="tier-head"><b>ROUND ${n}</b><span>Yahoo #${start}-${end} · ${a.length}</span></div>${a.map(draftRow).join('')}</section>`}
 
   function draftRow(p){
-    const po=normPos(p.position),ts=tags(p).filter(t=>t!=='TARGET');
+    const po=normPos(p.position),ts=playersApi.allTags(p).filter(t=>t!=='TARGET');
     const context=p.planner_reason||intelApi.latestContext(p.intel_items||[]);
     return `<div class="draft-row ${po} ${p.user_target?'targeted':''}"><div class="draft-rank">${esc(p.yahoo_rank??'—')}</div><span class="pos ${po}">${po}</span><div class="draft-player-main"><div class="draft-name">${esc(p.yahoo_name||p.display_name)}</div><div class="draft-meta"><span class="team-badge">${esc(p.team||'FA')}</span> · Tier ${esc(p.tier??'—')} · Yahoo #${esc(p.yahoo_rank??'—')}</div>${ts.length?`<div class="tags">${ts.slice(0,5).map(t=>`<span class="tag ${tagClass(t)}">${esc(t)}</span>`).join('')}</div>`:''}${context?`<div class="draft-intel">${esc(context)}</div>`:''}</div><button class="target-button draft-target ${p.user_target?'on':''}" data-key="${esc(p.player_key)}" data-target="${p.user_target?'false':'true'}">${p.user_target?'TARGETED':'TARGET'}</button></div>`;
   }
@@ -221,8 +164,7 @@
   function matchGeneric(x){if(!state.q)return true;return Object.values(x||{}).map(v=>String(v??'')).join(' ').toLowerCase().includes(state.q)}
 
   function renderTagged(){
-    let a=state.players.filter(isInjuryPlayer);
-    a=a.filter(matches).sort(sortYahoo);
+    const a=state.players.filter(p=>playersApi.isInjury(p,intelApi)).filter(matches).sort(playersApi.sortYahoo);
     $('pageMeta').textContent=`${a.length} current players`;
     $('content').innerHTML=`<div class="list">${a.map(playerCard).join('')||'<div class="empty">No current players match.</div>'}</div>`;
     bindTargets();
