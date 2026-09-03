@@ -18,18 +18,18 @@
   const state={slot:1,players:[],loading:true,error:null};
 
   const SLOT_PROFILES={
-    1:['Front of every tier.','Take the premium player, then plan for the long wait. Do not assume a back-of-tier player survives the turn.','Use the larger choice pool below instead of locking onto one name.'],
-    2:['Near the front of every tier.','Attack premium values but respect the RB drop-offs before your next pick.','Build RB/WR first; QB/TE only when the value is clearly better.'],
+    1:['Front of the board.','Take the premium player, then plan for the long wait. Do not assume a player near the end of your range survives the turn.','Use the larger choice pool below instead of locking onto one name.'],
+    2:['Near the front of the board.','Attack premium values but respect the RB drop-offs before your next pick.','Build RB/WR first; QB/TE only when the value is clearly better.'],
     3:['Boone decision point.','Rankings are a guide. If the last strong-volume RB will be gone by your next pick, a small reach is fine.','Preferred early shapes: RB-WR-WR or WR-RB-WR.'],
     4:['Early-middle flexibility.','Take the strongest value in your window and watch the RB cliff before the board comes back.','Do not force a position when the player quality is worse.'],
-    5:['Middle-slot flexibility.','You can play both sides of most tiers. Stay flexible while respecting RB scarcity.','Balanced RB/WR foundation first.'],
-    6:['Middle of every tier.','Use the board. If RB dries up before your next pick, act; otherwise take the better WR/TE value.','By Round 5, aim to have a real RB/WR core.'],
+    5:['Middle-slot flexibility.','You can play both sides of most value ranges. Stay flexible while respecting RB scarcity.','Balanced RB/WR foundation first.'],
+    6:['Middle of the board.','Use the board. If RB dries up before your next pick, act; otherwise take the better WR/TE value.','By Round 5, aim to have a real RB/WR core.'],
     7:['Hammer spot.','Pair a first-round cornerstone with the strong Round 2 RB/WR pocket.','Round 2 is a major decision point.'],
-    8:['Back half of each tier.','You are closer to the turn, so small reaches for players you will not see again are acceptable.','Use the six-name lists to make the turn less panicky.'],
-    9:['Back-half value.','Expect the very front of each tier to be gone; focus on realistic survivors and fallers.','Do not build around wish-list names that should already be drafted.'],
+    8:['Back half of the board.','You are closer to the turn, so small reaches for players you will not see again are acceptable.','Use the choice lists to make the turn less panicky.'],
+    9:['Back-half value.','Expect the very top names to be gone; focus on realistic survivors and fallers.','Do not build around wish-list names that should already be drafted.'],
     10:['Think in pairs.','Treat your two nearby picks as one roster-building decision.','RB + WR is the default early pairing unless elite value falls.'],
     11:['Turn leverage.','Take the best survivor, then attack scarcity or positional edge with the next selection.','Elite TE can be legitimate if the board gives it to you.'],
-    12:['The turn.','Start at the back of the current tier and spill into the next one.','Take the two players you would hate to lose during the long wait.']
+    12:['The turn.','Start with the best realistic players still available and spill into the next value range.','Take the two players you would hate to lose during the long wait.']
   };
 
   const ROUND_PLAN={
@@ -55,7 +55,7 @@
     ['christian watson',5],['marshawn lloyd',6],['jalen hurts',7],['tyler allgeier',11],['tyjae spears',12]
   ]);
 
-  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
 
   async function api(path){
     const r=await fetch(`${SB}/rest/v1/${path}`,{headers:H});
@@ -131,7 +131,7 @@
     if(player.user_target)return 'YOUR TARGET';
     if(rank<=pick-8)return 'FALL VALUE';
     if(rank<=pick+5)return 'IN RANGE';
-    if(rank<=pick+18)return 'NEXT TIER';
+    if(rank<=pick+18)return 'LATER VALUE';
     return 'REACH';
   }
 
@@ -146,7 +146,7 @@
     const extras=[...flags,player.yahoo_verified===false?'UNVERIFIED':null].filter(Boolean);
     return `<div class="position-option">
       <div class="position-name">${esc(player.yahoo_name||player.display_name)}</div>
-      <div class="position-meta">Yahoo #${esc(player.yahoo_rank)} · Tier ${esc(player.tier??'—')} · ${esc(player.team||'FA')} · ${esc(rangeLabel(player,pick))}${booneRound?` · Boone Rd ${booneRound}`:''}${extras.length?` · ${esc(extras.join(' / '))}`:''}</div>
+      <div class="position-meta">Yahoo #${esc(player.yahoo_rank)} · ${esc(player.team||'FA')} · ${esc(rangeLabel(player,pick))}${booneRound?` · Boone Rd ${booneRound}`:''}${extras.length?` · ${esc(extras.join(' / '))}`:''}</div>
     </div>`;
   }
 
@@ -167,7 +167,7 @@
       .sort((a,b)=>Number(a.yahoo_rank)-Number(b.yahoo_rank))
       .slice(0,3);
     if(!falls.length)return '';
-    return `<div class="fall-triggers">${falls.map(p=>`<div class="fall-trigger"><b>IF ${esc(p.yahoo_name||p.display_name)} FALLS</b><span>Yahoo #${esc(p.yahoo_rank)} · Tier ${esc(p.tier??'—')} · ${esc(p.position)} · take the value instead of forcing the normal plan.</span></div>`).join('')}</div>`;
+    return `<div class="fall-triggers">${falls.map(p=>`<div class="fall-trigger"><b>IF ${esc(p.yahoo_name||p.display_name)} FALLS</b><span>Yahoo #${esc(p.yahoo_rank)} · ${esc(p.position)} · take the value instead of forcing the normal plan.</span></div>`).join('')}</div>`;
   }
 
   function renderRound(round){
@@ -175,7 +175,7 @@
     const plan=ROUND_PLAN[round];
     return `<article class="round-card">
       <div class="round-head"><b>ROUND ${round}</b><span>Your pick #${pick}<br>${esc(plan.label)}</span></div>
-      <div class="focus">Six choices per position from the same canonical Yahoo-ranked player database.</div>
+      <div class="focus">Choices from the same canonical Yahoo-ranked player database.</div>
       ${fallTriggers(round,pick)}
       <div class="position-grid">${POSITIONS.map(pos=>renderPosition(pos,round,pick,plan.modes[pos])).join('')}</div>
       <div class="round-note">${esc(plan.note)}</div>
