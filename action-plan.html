@@ -3,73 +3,53 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#f5f7fb">
+  <meta name="theme-color" content="#08111f">
   <title>2026 Fantasy Draft Action Plan</title>
   <link rel="stylesheet" href="strategy.css">
   <style>
-    .action-rule{margin:18px 0 14px;border:2px solid #15803d;border-radius:16px;background:#f0fdf4;padding:18px}.action-rule h2{margin:0 0 7px;font-size:22px;color:#166534}.action-rule p{margin:5px 0;color:#14532d;font-size:14px;line-height:1.5;font-weight:750}.action-rule strong{font-size:16px}.path-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:14px 0}.path-tabs button{border:1px solid #cbd5e1;border-radius:12px;background:#fff;color:#334155;padding:12px 9px;font-size:12px;font-weight:950;line-height:1.25}.path-tabs button.active{background:#0f172a;border-color:#0f172a;color:#fff}.path-tabs button.recommended{box-shadow:inset 0 -3px 0 #15803d}.checkpoint{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:0 0 16px}.checkpoint article{border:1px solid #cbd5e1;border-radius:13px;background:#fff;padding:13px}.checkpoint b{display:block;font-size:12px;color:#64748b;margin-bottom:5px}.checkpoint strong{display:block;font-size:15px;line-height:1.25}.checkpoint span{display:block;margin-top:5px;font-size:11px;line-height:1.4;color:#64748b}.ladder-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:0 0 16px}.ladder{border:1px solid #cbd5e1;border-radius:16px;background:#fff;padding:16px}.ladder h3{margin:0 0 10px;font-size:16px}.ladder-row{display:grid;grid-template-columns:80px 1fr;gap:10px;border-top:1px solid #e2e8f0;padding:9px 0;font-size:12px;line-height:1.4}.ladder-row:first-of-type{border-top:0}.ladder-row b{color:#475569}.ladder-row span{font-weight:800}.path-warning{margin:10px 0 0;padding:10px 12px;border-radius:10px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;font-size:12px;line-height:1.45;font-weight:800}.round-card.locked{border-color:#f59e0b;box-shadow:0 0 0 1px #f59e0b inset}.position-option.simple .position-meta{font-size:10px}.priority-banner{margin:10px 0;padding:10px;border-radius:10px;background:#eff6ff;border:1px solid #bfdbfe;font-size:12px;font-weight:900;color:#1e3a8a;line-height:1.4}.round-check{margin-top:10px;padding:9px 10px;border-radius:9px;background:#f8fafc;border:1px solid #e2e8f0;font-size:11px;font-weight:850;color:#475569;line-height:1.4}@media(max-width:900px){.path-tabs,.checkpoint{grid-template-columns:repeat(2,1fr)}.ladder-grid{grid-template-columns:1fr}}@media(max-width:520px){.path-tabs,.checkpoint{grid-template-columns:1fr}.action-rule h2{font-size:19px}.ladder-row{grid-template-columns:70px 1fr}}
+    :root{--ap-navy:#08111f;--ap-blue:#174a73;--ap-line:#cad5e2;--ap-bg:#eef3f8;--ap-white:#fff;--ap-green:#e2f0d9;--ap-green-text:#14532d;--ap-yellow:#fff2cc;--ap-orange:#fce4d6;--ap-rb:#e8f5e9;--ap-wr:#eaf2f8;--ap-qb:#fff2cc;--ap-te:#f3e8ff;--ap-muted:#475569;--ap-red:#b42318}
+    body{background:var(--ap-bg);padding-bottom:30px}.guide{width:min(calc(100% - 18px),1900px)}
+    .guide-header{position:sticky;top:0;background:rgba(238,243,248,.98);padding:10px 0 8px;z-index:50}
+    .header-row h1{font-size:30px}.header-row p{font-size:13px}.header-actions-ap{display:flex;gap:8px}.header-actions-ap a{white-space:nowrap}
+    .sheet-tabs{display:flex;gap:4px;overflow-x:auto;background:#090909;padding:4px 4px 0;margin-top:10px;border-bottom:1px solid #333;scrollbar-width:thin}
+    .sheet-tabs button{flex:0 0 auto;border:1px solid #555;border-bottom:0;border-radius:7px 7px 0 0;background:#111;color:#fff;padding:12px 18px;font-size:16px;font-weight:850;cursor:pointer}
+    .sheet-tabs button.active{background:#fff;color:#111;border-color:#d7dce3}.sheet-tabs button.recommended::after{content:' •';color:#22c55e}
+    .slot-shell{display:flex;align-items:center;gap:10px;margin:12px 0}.slot-label{font-weight:950;font-size:14px;white-space:nowrap}.slot-tabs{display:flex;gap:6px;overflow-x:auto;margin:0;flex:1}.slot-tabs button{min-width:68px;padding:13px 8px;font-size:14px;font-weight:950}.slot-tabs button.active{transform:translateY(-1px);box-shadow:0 4px 12px rgba(29,78,216,.22)}
+    .hero-rule{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;background:var(--ap-green);border:2px solid #67a551;border-radius:14px;padding:14px 18px;margin:12px 0}.hero-rule strong{display:block;font-size:23px;color:var(--ap-green-text);line-height:1.1}.hero-rule span{display:block;margin-top:5px;color:#235d2c;font-weight:800;font-size:14px}.hero-picks{font-size:20px;font-weight:950;color:var(--ap-green-text);white-space:nowrap}
+    .slot-callout{display:grid;grid-template-columns:1.15fr .85fr;gap:12px;margin:0 0 12px}.callout-main,.callout-alt{border-radius:14px;padding:15px 17px;border:1px solid var(--ap-line)}.callout-main{background:#fff}.callout-alt{background:var(--ap-yellow)}.callout-kicker{font-size:11px;font-weight:950;letter-spacing:.08em;color:var(--ap-muted)}.callout-main h2{margin:4px 0 0;font-size:24px;line-height:1.15}.callout-alt b{display:block;font-size:14px;margin-bottom:5px}.callout-alt p{margin:0;font-weight:850;line-height:1.35}
+    .round-strip{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px}.action-card{background:#fff;border:1px solid var(--ap-line);border-radius:14px;overflow:hidden;min-width:0;box-shadow:0 2px 5px rgba(15,23,42,.05)}.action-card .rhead{display:flex;justify-content:space-between;align-items:center;background:var(--ap-blue);color:#fff;padding:10px 12px}.action-card .rhead strong{font-size:18px}.action-card .rhead span{font-size:13px;font-weight:900}.action-card .verb{font-size:11px;font-weight:950;letter-spacing:.09em;color:var(--ap-muted);padding:11px 12px 4px}.action-card .command{font-size:18px;font-weight:950;line-height:1.18;padding:0 12px 10px;white-space:pre-line}.action-card .names{border-top:1px solid #dce3eb;padding:10px 12px 13px;font-size:13px;line-height:1.42;font-weight:800;white-space:pre-line}.action-card.r1 .command,.action-card.r2 .command{font-size:20px}.action-card.rb{background:var(--ap-rb)}.action-card.wr{background:var(--ap-wr)}.action-card.qb{background:var(--ap-qb)}.action-card.te{background:var(--ap-te)}.action-card.finish{background:var(--ap-yellow)}
+    .checkpoint-bar{display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center;margin:12px 0;background:var(--ap-navy);color:#fff;border-radius:13px;padding:13px 16px}.checkpoint-bar strong{font-size:18px}.checkpoint-bar span{font-size:13px;color:#dbe7f4;font-weight:750}.checkpoint-bar b{font-size:21px;color:#9ee58c;white-space:nowrap}
+    .after-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}.ladder{background:#fff;border:1px solid var(--ap-line);border-radius:14px;padding:14px}.ladder.qb{background:var(--ap-qb)}.ladder.te{background:var(--ap-te)}.ladder h3{font-size:17px;margin:0 0 8px}.ladder-row{display:grid;grid-template-columns:78px 1fr;gap:10px;border-top:1px solid rgba(100,116,139,.25);padding:9px 0;font-size:13px}.ladder-row:first-of-type{border-top:0}.ladder-row b{font-weight:950}.ladder-row span{font-weight:850}.preferred{font-size:15px;color:#9a3412}
+    .panel-only{display:none}.panel-only.active{display:block}.late-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}.late-card{background:#fff;border:1px solid var(--ap-line);border-radius:14px;padding:15px}.late-card .num{font-size:28px;font-weight:950;color:var(--ap-blue)}.late-card h3{margin:5px 0 8px;font-size:17px}.late-card p{font-size:13px;line-height:1.4;font-weight:750;color:var(--ap-muted)}
+    .danger{color:var(--ap-red)}.path-warning{margin:12px 0 0;background:var(--ap-orange);border:1px solid #f3b58f;border-radius:12px;padding:12px 14px;font-size:13px;font-weight:850;color:#9a3412}
+    @media(max-width:1250px){.round-strip{grid-template-columns:repeat(3,1fr)}.action-card:nth-child(4),.action-card:nth-child(5){grid-column:auto}.late-grid{grid-template-columns:repeat(3,1fr)}}
+    @media(max-width:820px){.guide{width:min(calc(100% - 12px),100%)}.guide-header{position:relative}.header-row{display:block}.header-actions-ap{margin-top:8px}.sheet-tabs button{padding:11px 13px;font-size:14px}.slot-callout,.after-grid{grid-template-columns:1fr}.round-strip{grid-template-columns:1fr 1fr}.late-grid{grid-template-columns:1fr 1fr}.hero-rule{grid-template-columns:1fr}.hero-picks{white-space:normal}.checkpoint-bar{grid-template-columns:1fr}}
+    @media(max-width:520px){.round-strip,.late-grid{grid-template-columns:1fr}.action-card .command{font-size:19px}.callout-main h2{font-size:21px}.slot-shell{align-items:flex-start;flex-direction:column}.slot-tabs{width:100%}}
   </style>
 </head>
 <body>
   <main class="guide">
     <header class="guide-header">
       <div class="header-row">
-        <div>
-          <h1>2026 DRAFT ACTION PLAN</h1>
-          <p>12-team half-PPR · pick your draft slot, then follow one opening path without panicking or changing the plan mid-draft.</p>
-        </div>
-        <a class="back" href="index.html">← INTEL APP</a>
+        <div><h1>2026 DRAFT ACTION PLAN</h1><p>Fast-glance draft-night board. Study Guide remains separate.</p></div>
+        <div class="header-actions-ap"><a class="back" href="strategy.html">STUDY GUIDE</a><a class="back" href="index.html">← INTEL APP</a></div>
       </div>
-      <div id="slotTabs" class="slot-tabs"></div>
+      <nav id="sheetTabs" class="sheet-tabs" aria-label="Action Plan tabs"></nav>
+      <div id="slotShell" class="slot-shell"><span class="slot-label">MY DRAFT PICK:</span><div id="slotTabs" class="slot-tabs"></div></div>
     </header>
 
-    <section class="action-rule">
-      <h2>DEFAULT RULE: FIRST FIVE PICKS = RB / WR FOUNDATION</h2>
-      <p><strong>Leave Round 5 with at least 2 RB + 2 WR.</strong> Your fifth skill player is whichever position gives you the best value: 3 RB + 2 WR or 2 RB + 3 WR.</p>
-      <p>Boone's 2026 warning is the RB cliff: secure at least two, potentially three running backs before Round 6. Do not force QB or TE just because a round number arrives.</p>
+    <section id="planPanel" class="panel-only active">
+      <div class="hero-rule"><div><strong id="heroRuleTitle">FIRST FIVE = RB / WR</strong><span id="heroRuleText">Finish with 3 RB + 2 WR or 2 RB + 3 WR. Minimum two at each position.</span></div><div id="heroPicks" class="hero-picks"></div></div>
+      <section class="slot-callout"><article class="callout-main"><div class="callout-kicker">BEST OPENING COMBINATION</div><h2 id="openingPrimary"></h2></article><article class="callout-alt"><b>IF THAT DOESN'T HAPPEN</b><p id="openingAlt"></p></article></section>
+      <section id="roundStrip" class="round-strip"></section>
+      <section class="checkpoint-bar"><div><strong id="checkpointTitle"></strong><br><span id="checkpointText"></span></div><b id="checkpointBig"></b></section>
+      <div id="pathWarning" class="path-warning" hidden></div>
+      <section class="after-grid"><article class="ladder qb"><h3>QB — IF YOU WAIT</h3><div id="qbMini"></div></article><article class="ladder te"><h3>TE — IF YOU WAIT</h3><div id="teMini"></div></article></section>
     </section>
 
-    <div id="pathTabs" class="path-tabs"></div>
+    <section id="qbTePanel" class="panel-only"><div class="hero-rule"><div><strong>QB / TE LADDER</strong><span>Use this only after your RB/WR foundation is secure.</span></div><div class="hero-picks">NO PANIC PICKS</div></div><section class="after-grid"><article class="ladder qb"><h3>QUARTERBACK</h3><div id="qbFull"></div></article><article class="ladder te"><h3>TIGHT END</h3><div id="teFull"></div></article></section></section>
 
-    <section class="slot-summary">
-      <article class="summary-card">
-        <h2 id="slotTitle">PICK 1 · DEFAULT ACTION PLAN</h2>
-        <p id="slotHeadline"></p>
-        <p id="slotApproach"></p>
-        <div id="slotBuild" class="build"></div>
-        <div id="pathWarning" class="path-warning" hidden></div>
-      </article>
-      <aside class="source-card">
-        <h3>Why this plan changed</h3>
-        <p><b>Justin Boone:</b> get at least two and potentially three RBs before Round 6; waiting on QB is viable because the position is deep.</p>
-        <p><b>Current expert-draft market:</b> Brock Bowers went #18, Josh Allen #31, Trey McBride #44. That makes Bowers in Round 2 market-consistent, Allen in Round 2 a deliberate reach, and McBride in Round 2 a much bigger reach.</p>
-        <p><b>Core rule:</b> if you spend Round 2 on Allen/Bowers/McBride, Rounds 3–5 become RB/WR correction rounds. Do not pay an early premium at both QB and TE.</p>
-        <p><a href="https://sports.yahoo.com/fantasy/article/fantasy-football-justin-boones-takeaways-from-the-yahoo-fantasy-expert-league-draft-161424586.html" target="_blank" rel="noopener">Boone expert draft</a> · <a href="https://ca.sports.yahoo.com/video/three-last-minute-tips-fantasy-182255651.html" target="_blank" rel="noopener">Boone last-minute rules</a> · <a href="https://sports.yahoo.com/fantasy/article/2026-fantasy-football-qb-preview-draft-strategy-rankings-fades-and-sleepers-173310318.html" target="_blank" rel="noopener">Boone QB strategy</a></p>
-      </aside>
-    </section>
-
-    <section class="checkpoint" id="checkpoint"></section>
-
-    <section class="ladder-grid">
-      <article class="ladder">
-        <h3>QB FALLBACK LADDER — IF YOU DON'T TAKE ALLEN EARLY</h3>
-        <div class="ladder-row"><b>R6–7</b><span>Only if they fall: Jalen Hurts → Lamar Jackson → Drake Maye → Joe Burrow</span></div>
-        <div class="ladder-row"><b>R8</b><span>Jayden Daniels → Caleb Williams</span></div>
-        <div class="ladder-row"><b>R9</b><span><strong>Justin Herbert → Dak Prescott</strong> — preferred value zone</span></div>
-        <div class="ladder-row"><b>R10+</b><span>Trevor Lawrence → Brock Purdy → Matthew Stafford → Bo Nix</span></div>
-        <div class="ladder-row"><b>STACK</b><span>Stafford gets a bump if you already drafted Puka Nacua.</span></div>
-      </article>
-      <article class="ladder">
-        <h3>TE FALLBACK LADDER — IF YOU DON'T TAKE BOWERS / McBRIDE EARLY</h3>
-        <div class="ladder-row"><b>R6</b><span>Tyler Warren → Sam LaPorta → Tucker Kraft</span></div>
-        <div class="ladder-row"><b>R7–8</b><span><strong>George Kittle → Kyle Pitts → Dalton Kincaid</strong></span></div>
-        <div class="ladder-row"><b>R9–10</b><span>Isaiah Likely → Travis Kelce</span></div>
-        <div class="ladder-row"><b>RULE</b><span>Once you draft your TE1, stop spending useful draft capital on a backup TE.</span></div>
-      </article>
-    </section>
-
-    <section id="rounds" class="rounds"></section>
-    <p class="legend"><b>Action rule:</b> follow roster construction before chasing a name. Default first-five checkpoint is 2 RB + 2 WR minimum. If you choose Allen/Bowers/McBride in Round 2, the checkpoint changes to that player + 2 RB + 2 WR by the end of Round 5. DEF and K stay in the final two rounds.</p>
+    <section id="latePanel" class="panel-only"><div class="hero-rule"><div><strong>LATE ROUNDS</strong><span>Bench = upside. Defense and kicker stay at the end.</span></div><div class="hero-picks">UPSIDE > SAFE</div></div><section id="lateGrid" class="late-grid"></section></section>
   </main>
   <script src="action-plan.js" defer></script>
 </body>
