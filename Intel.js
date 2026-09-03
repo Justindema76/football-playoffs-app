@@ -57,11 +57,6 @@
     return item?.recommendation||item?.what_changed||'';
   }
 
-  function tierFor(player){
-    const rank=Number(player?.yahoo_rank);
-    return Number.isInteger(rank)&&rank>0?Math.ceil(rank/12):null;
-  }
-
   function sourceHtml(sourceNote,esc){
     const note=String(sourceNote||'').trim();
     if(!note)return '';
@@ -107,22 +102,9 @@
     $('content').innerHTML=`<div class="list">${players.map(player=>{
       const items=sort(player.intel_items||[]);
       const newest=items[0]||{};
-      const tier=player.tier??tierFor(player);
-      return `<article class="intel-card ${player.user_target?'targeted':''}"><div class="card-top"><span class="pos ${normPos(player.position)}">${normPos(player.position)}</span><div style="display:flex;gap:7px;align-items:center"><span class="tier-badge">TIER ${esc(tier??'—')}</span><span class="rank">Yahoo #${esc(player.yahoo_rank??'—')}</span><span class="tag ${tagClass(newest.action)}">${esc(newest.action||'INTEL')}</span></div></div><div class="player-name">${esc(player.yahoo_name||player.display_name)}</div><div class="player-team-line"><span class="team-badge">${esc(player.team||'FA')}</span><span class="player-meta">${esc(newest.priority||'')}${newest.last_checked_at?` · Checked ${esc(new Date(newest.last_checked_at).toLocaleString())}`:''}</span></div>${isInjuryPlayer(player)?'<div class="tags"><span class="tag injury">INJURY</span></div>':''}${items.map(item=>`<div class="detail-item"><p>${esc(item.what_changed||'')}</p>${item.recommendation?`<p><b>WHAT TO DO:</b> ${esc(item.recommendation)}</p>`:''}${item.draft_tags?.length?`<div class="tags">${item.draft_tags.map(tag=>`<span class="tag ${tagClass(tag)}">${esc(tag)}</span>`).join('')}</div>`:''}${sourceHtml(item.source_note,esc)}${checkedHtml(item,esc)}</div>`).join('')}</article>`;
+      return `<article class="intel-card ${player.user_target?'targeted':''}"><div class="card-top"><span class="pos ${normPos(player.position)}">${normPos(player.position)}</span><div style="display:flex;gap:7px;align-items:center"><span class="tier-badge">TIER ${esc(player.tier??'—')}</span><span class="rank">Yahoo #${esc(player.yahoo_rank??'—')}</span><span class="tag ${tagClass(newest.action)}">${esc(newest.action||'INTEL')}</span></div></div><div class="player-name">${esc(player.yahoo_name||player.display_name)}</div><div class="player-team-line"><span class="team-badge">${esc(player.team||'FA')}</span><span class="player-meta">${esc(newest.priority||'')}${newest.last_checked_at?` · Checked ${esc(new Date(newest.last_checked_at).toLocaleString())}`:''}</span></div>${isInjuryPlayer(player)?'<div class="tags"><span class="tag injury">INJURY</span></div>':''}${items.map(item=>`<div class="detail-item"><p>${esc(item.what_changed||'')}</p>${item.recommendation?`<p><b>WHAT TO DO:</b> ${esc(item.recommendation)}</p>`:''}${item.draft_tags?.length?`<div class="tags">${item.draft_tags.map(tag=>`<span class="tag ${tagClass(tag)}">${esc(tag)}</span>`).join('')}</div>`:''}${sourceHtml(item.source_note,esc)}${checkedHtml(item,esc)}</div>`).join('')}</article>`;
     }).join('')||'<div class="empty">No current intel matches.</div>'}</div>`;
   }
 
-  window.FantasyIntel=Object.freeze({
-    safeLoad,
-    sort,
-    groupByName,
-    tagsFromItems,
-    isInjuryPlayer,
-    matchesSearch,
-    latest,
-    latestContext,
-    tierFor,
-    renderPlayerDetails,
-    render
-  });
+  window.FantasyIntel=Object.freeze({safeLoad,sort,groupByName,tagsFromItems,isInjuryPlayer,matchesSearch,latest,latestContext,renderPlayerDetails,render});
 })();
