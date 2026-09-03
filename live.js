@@ -59,6 +59,11 @@
   document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{state.view=b.dataset.view;document.querySelectorAll('[data-view]').forEach(x=>x.classList.toggle('active',x===b));render()});
   $('search').oninput=e=>{state.q=e.target.value.trim().toLowerCase();render()};
   $('refresh').onclick=()=>load();
+  $('reset').onclick=async()=>{
+    if(!confirm('Clear every drafted/gone mark? Do this between drafts (a new mock, or before draft night) so old picks don\'t carry over -- not mid-draft.'))return;
+    try{await api('live_draft_state?player_key=not.is.null',{method:'DELETE'});await load()}
+    catch(e){$('notice').hidden=false;$('notice').textContent=`Reset failed: ${e.message}`}
+  };
   load();
   setInterval(load,2000);
 })();
