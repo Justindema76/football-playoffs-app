@@ -12,9 +12,13 @@
   <main class="guide">
     <header class="guide-header">
       <div class="header-row">
-        <div><h1>2026 DRAFT STUDY GUIDE</h1><p>Manual 12-team half-PPR cheat sheet · choose your draft slot and study the round-by-round plan.</p></div>
+        <div>
+          <h1>2026 DRAFT STUDY GUIDE</h1>
+          <p>12-team half-PPR · same canonical Yahoo-ranked players as the main fantasy app · six choices per position.</p>
+        </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="back" href="index.html">← INTEL APP</a><a class="back" href="live.html">LIVE VIEWER</a></div>
       </div>
+      <div id="guideDataStatus" class="legend">SYNCING SHARED PLAYER DATABASE</div>
       <div id="slotTabs" class="slot-tabs"></div>
     </header>
 
@@ -27,19 +31,21 @@
       </article>
       <aside class="source-card">
         <h3>Yahoo expert signals used</h3>
-        <p><b>Justin Boone:</b> strong Round 2 RB tier; Round 3 RBs carry more risk; Round 5 is a key final window for dependable RB volume; QB can be pushed later.</p>
-        <p><b>QB rule:</b> Rounds 1–2 wait. Round 3 is Josh Allen only. Lamar Jackson becomes live in Round 4. Rounds 5–6 are preferred-QB value windows, Rounds 7–10 are the main value-QB zone, and a second QB is only worth a bench spot when your starter is risky or the stack is unusually strong.</p>
-        <p><b>Scott Pianowski:</b> Amon-Ra early; Chase Brown ideal Round 2; Derrick Henry pivot; Ladd McConkey Round 4; Blake Corum late upside.</p>
-        <p><b>Joel Smyth:</b> Javonte late Round 3; Etienne/Bucky volume values; Bo Nix late-QB punt; Nico/Olave upgrades; Tucker Kraft around Round 6.</p>
-        <p><a href="https://sports.yahoo.com/fantasy/article/fantasy-football-justin-boones-takeaways-from-the-yahoo-fantasy-expert-league-draft-161424586.html" target="_blank" rel="noopener">Boone expert draft</a> · <a href="https://sports.yahoo.com/fantasy/article/fantasy-football-scott-pianowski-shares-his-my-guys--preferred-players-hes-drafting-often-for-2026-155507485.html" target="_blank" rel="noopener">Pianowski My Guys</a> · <a href="https://sports.yahoo.com/fantasy/article/players-at-each-position-joel-smyth-has-changed-his-mind-on-the-most-throughout-training-camp-and-preseason-for-2026-fantasy-football-195003645.html" target="_blank" rel="noopener">Smyth camp changes</a></p>
+        <p><b>Same player database:</b> names, teams, positions, Yahoo ranks and tiers are loaded from the same Supabase canonical player records used by Players, Running Backs, Wide Receivers, Intel and Draft. The study guide no longer maintains its own ranked player list.</p>
+        <p><b>Round 1:</b> Boone took Jonathan Taylor at 1.03 instead of blindly following rankings because he expected a major RB drop before his next pick.</p>
+        <p><b>Round 2:</b> the expert room hit RB hard — Chase Brown, Omarion Hampton, Kenneth Walker III, De'Von Achane, Derrick Henry, Kyren Williams and Ashton Jeanty all went in the round.</p>
+        <p><b>Rounds 3–5:</b> WR depth becomes attractive; early QB is hard to justify; elite TE can be worth the cost; Round 5 is an important final window for dependable RB volume.</p>
+        <p><b>Round 7 onward:</b> Boone took Jalen Hurts after most of his starting lineup was built, then leaned into upside and contingent RB value later.</p>
+        <p><a href="https://sports.yahoo.com/fantasy/article/fantasy-football-justin-boones-takeaways-from-the-yahoo-fantasy-expert-league-draft-161424586.html" target="_blank" rel="noopener">Justin Boone: Yahoo Expert League takeaways</a></p>
       </aside>
     </section>
 
     <section id="rounds" class="rounds"></section>
-    <p class="legend"><b>How to use this:</b> this is a manual study guide, not a live draft engine. The three names are the preferred options for the area of the board where your pick lands. If the first name is gone, move to the next option and follow the position/focus note rather than forcing a bad pick.</p>
+    <p class="legend"><b>How to use this:</b> pick your draft slot. Every round shows six current choices at RB, WR, TE and QB around your actual snake-draft pick. Yellow/targeted players are your existing targets. Yahoo rank and tier come from the shared player database, so changing a canonical player updates this guide and the rest of the app together.</p>
   </main>
+  <script src="Intel.js" defer></script>
+  <script src="Players.js" defer></script>
   <script src="draft-strategy.js" defer></script>
-  <script src="Quarterbacks.js" defer></script>
   <script src="mobile-nav.js" defer></script>
 </body>
 </html>
