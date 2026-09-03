@@ -14,7 +14,7 @@
       <div class="brand">
         <span class="live-kicker">2026 FANTASY COMMAND CENTER</span>
         <h1>LIVE DRAFT VIEWER</h1>
-        <p>Yahoo draft feed · your slot, your next pick, your queue</p>
+        <p>Yahoo draft feed · drafted players are crossed off automatically</p>
       </div>
       <div class="status-wrap">
         <span id="syncStatus" class="status syncing">SYNCING</span>
@@ -46,32 +46,14 @@
       </article>
     </section>
 
-    <section class="summary" aria-label="Player availability summary">
+    <section class="summary" aria-label="Drafted player summary">
       <div class="stat"><b id="availableCount">—</b><span>AVAILABLE</span></div>
-      <div class="stat"><b id="goneCount">—</b><span>DRAFTED</span></div>
-      <div class="stat"><b id="starCount">—</b><span>MY TARGETS LEFT</span></div>
+      <div class="stat drafted-stat"><b id="goneCount">—</b><span>DRAFTED</span></div>
       <div class="stat"><b id="lastUpdate">—</b><span>LAST PICK</span></div>
     </section>
 
-    <section class="controls">
+    <section class="controls simple-controls">
       <input id="search" type="search" placeholder="Search player, team, position..." autocomplete="off">
-      <div class="segmented" role="tablist">
-        <button class="active" data-view="starred">MY TARGETS</button>
-        <button data-view="all">ALL</button>
-        <button data-view="gone">DRAFTED</button>
-        <button id="mineTab" data-view="mine" hidden>MY PICKS</button>
-      </div>
-      <div class="sort-wrap">
-        <label for="sortBy" class="sort-label">SORT</label>
-        <select id="sortBy">
-          <option value="rank">Yahoo Rank</option>
-          <option value="name">Name</option>
-          <option value="pos">Position</option>
-          <option value="team">Team</option>
-        </select>
-        <button id="sortDir" class="sort-dir" title="Toggle ascending/descending" aria-label="Toggle sort direction">↑</button>
-      </div>
-      <button id="refresh" class="refresh">REFRESH</button>
       <button id="reset" class="reset">RESET DRAFT</button>
     </section>
 
