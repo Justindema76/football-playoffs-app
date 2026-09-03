@@ -2,291 +2,171 @@
   'use strict';
 
   const $ = id => document.getElementById(id);
-  const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const overallPick = (slot, round) => round % 2 ? ((round - 1) * 12 + slot) : (round * 12 - slot + 1);
+  const POSITIONS = ['RB','WR','TE','QB'];
 
-  const PATHS = {
-    default: {
-      label: 'DEFAULT · RB/WR FIRST 5',
-      short: 'DEFAULT ACTION PLAN',
-      recommended: true,
-      headline: 'Build the roster first. Do not enter the draft needing a quarterback or tight end by a certain round.',
-      approach: 'Rounds 1–5 are RB/WR foundation rounds. Leave Round 5 with a minimum of 2 RB + 2 WR. The fifth player is simply the best value: either 3 RB + 2 WR or 2 RB + 3 WR.',
-      build: 'ROUND 5 CHECKPOINT: 5 RB/WR total · minimum 2 RB · minimum 2 WR.',
-      warning: ''
-    },
-    allen: {
-      label: 'JOSH ALLEN · ROUND 2',
-      short: 'ALLEN R2 ACTION PLAN',
-      headline: 'Allen is a deliberate Round-2 exception, not the default Boone build.',
-      approach: 'Take an elite RB/WR in Round 1, Josh Allen in Round 2, then spend Rounds 3–5 on RB/WR only. You cannot follow Allen with an early TE and still keep the roster balanced.',
-      build: 'ROUND 5 CHECKPOINT: Josh Allen + 2 RB + 2 WR.',
-      warning: 'Allen went #31 overall in the Sept. 2 Yahoo expert draft. Taking him in Round 2 is a conscious reach. If you make it, do not compound it by reaching for TE next.'
-    },
-    bowers: {
-      label: 'BROCK BOWERS · ROUND 2',
-      short: 'BOWERS R2 ACTION PLAN',
-      headline: 'Bowers is the cleanest premium onesie exception because his current market price actually sits in Round 2.',
-      approach: 'Take an elite RB/WR in Round 1, Bowers in Round 2, then use Rounds 3–5 exclusively on RB/WR. Quarterback becomes a value hunt after the foundation is repaired.',
-      build: 'ROUND 5 CHECKPOINT: Brock Bowers + 2 RB + 2 WR.',
-      warning: 'Bowers went #18 overall in the Sept. 2 Yahoo expert draft. Around the middle/back of Round 2, the price is defensible. Do not also pay an early premium at QB.'
-    },
-    mcbride: {
-      label: 'TREY McBRIDE · ROUND 2',
-      short: 'McBRIDE R2 ACTION PLAN',
-      headline: 'McBride in Round 2 is a conviction pick and requires the strictest recovery plan.',
-      approach: 'Take an elite RB/WR in Round 1, McBride in Round 2, then RB/WR only in Rounds 3–5. Quarterback must wait unless a massive value falls.',
-      build: 'ROUND 5 CHECKPOINT: Trey McBride + 2 RB + 2 WR.',
-      warning: 'McBride went #44 overall in the Sept. 2 Yahoo expert draft. Round 2 is a major reach versus the current market, so the next three picks cannot be luxury picks.'
-    }
+  const PLAYERS = [
+    [1,'Jahmyr Gibbs','RB','TARGET'],[2,'Bijan Robinson','RB','TARGET'],[3,"Ja'Marr Chase",'WR','TARGET'],[4,'Puka Nacua','WR','TARGET'],[5,'Jonathan Taylor','RB','TARGET'],[6,'Christian McCaffrey','RB','INTEL'],[7,'Amon-Ra St. Brown','WR','TARGET'],[8,'Jaxon Smith-Njigba','WR','TARGET'],[9,'James Cook','RB','TARGET'],[10,'Saquon Barkley','RB','INTEL'],[11,'CeeDee Lamb','WR','TARGET'],[12,'Kenneth Walker III','RB','INTEL'],
+    [13,'Justin Jefferson','WR','TARGET'],[14,'Chase Brown','RB','TARGET'],[15,"De'Von Achane",'RB','INTEL'],[17,'Derrick Henry','RB','EXPERT'],[18,'Nico Collins','WR','TARGET'],[19,'Brock Bowers','TE','TARGET'],[20,'Drake London','WR','TARGET'],[23,'George Pickens','WR','TARGET'],[24,'Malik Nabers','WR','TARGET'],
+    [27,'Chris Olave','WR','EXPERT'],[28,'Tee Higgins','WR','TARGET'],[29,'Trey McBride','TE','TARGET'],[31,'Josh Allen','QB','TARGET'],[35,'Javonte Williams','RB','TARGET'],
+    [37,'Colston Loveland','TE','TARGET'],[38,'Tetairoa McMillan','WR','TARGET'],[39,'Ladd McConkey','WR','TARGET'],[41,'Travis Etienne Jr.','RB','TARGET'],[42,"D'Andre Swift",'RB','TARGET'],[43,'Emeka Egbuka','WR','TARGET'],[45,'Luther Burden III','WR','INTEL'],[46,'Terry McLaurin','WR','TARGET'],[47,'Tyler Warren','TE','TARGET'],[48,'DJ Moore','WR','TARGET'],
+    [49,'Cam Skattebo','RB','TARGET'],[51,'Rome Odunze','WR','TARGET'],[53,'Bucky Irving','RB','TARGET'],[55,'Bhayshul Tuten','RB','TARGET'],[57,'Davante Adams','WR','TARGET'],[59,'David Montgomery','RB','TARGET'],[60,'Jadarian Price','RB','TARGET'],
+    [61,'Mike Evans','WR','INTEL'],[62,'Drake Maye','QB','TARGET'],[63,'Jayden Daniels','QB','TARGET'],[64,'Joe Burrow','QB','TARGET'],[66,'Jalen Hurts','QB','TARGET'],[67,'Tucker Kraft','TE','TARGET'],[68,'Rhamondre Stevenson','RB','INTEL'],[69,'Marvin Harrison Jr.','WR','TARGET'],[72,'Caleb Williams','QB','TARGET'],
+    [73,'Brian Thomas Jr.','WR','TARGET'],[75,'Justin Herbert','QB','TARGET'],[76,'Jonathon Brooks','RB','TARGET'],[77,'DK Metcalf','WR','INTEL'],[79,'Trevor Lawrence','QB','TARGET'],[80,'Dak Prescott','QB','TARGET'],[83,'Rico Dowdle','RB','TARGET'],[84,'J.K. Dobbins','RB','TARGET'],
+    [86,'Michael Wilson','WR','TARGET'],[88,'George Kittle','TE','TARGET'],[89,'Jacory Croskey-Merritt','RB','INTEL'],[90,'Stefon Diggs','WR','TARGET'],[91,'Blake Corum','RB','TARGET'],[93,'Chuba Hubbard','RB','TARGET'],[95,'Jordan Addison','WR','TARGET'],
+    [97,'Brock Purdy','QB','TARGET'],[99,'Courtland Sutton','WR','TARGET'],[153,'Bo Nix','QB','EXPERT'],[103,'Jordan Mason','RB','TARGET'],[105,'Michael Pittman Jr.','WR','INTEL'],[107,'Dalton Kincaid','TE','TARGET'],
+    [109,'RJ Harvey','RB','TARGET'],[112,'Matthew Stafford','QB','TARGET'],[114,'Kyler Murray','QB','INTEL'],[115,'Kenny Gainwell','RB','TARGET'],[116,'Rachaad White','RB','TARGET'],[117,'Dallas Goedert','TE','TARGET'],[118,'Jared Goff','QB','TARGET'],[119,'Patrick Mahomes','QB','TARGET'],[120,'Travis Kelce','TE','TARGET'],
+    [123,'Aaron Jones','RB','TARGET'],[124,'Jordan Love','QB','TARGET'],[125,'Jakobi Meyers','WR','TARGET'],[127,'Keaton Mitchell','RB','TARGET'],[129,'MarShawn Lloyd','RB','TARGET'],
+    [133,'Woody Marks','RB','TARGET'],[137,'Baker Mayfield','QB','TARGET'],[139,'Tyler Allgeier','RB','TARGET'],
+    [146,'Jake Ferguson','TE','TARGET'],[148,'Keenan Allen','WR','TARGET'],[151,'Dalton Schultz','TE','TARGET'],[152,'Deebo Samuel Sr.','WR','TARGET'],[154,'Jalen McMillan','WR','TARGET'],
+    [158,'Chig Okonkwo','TE','TARGET'],[159,'Terrance Ferguson','TE','TARGET'],[161,'Braelon Allen','RB','TARGET'],[163,'Brian Robinson','RB','TARGET'],[164,'C.J. Stroud','QB','TARGET'],[166,'Daniel Jones','QB','TARGET'],[168,'Brenton Strange','TE','TARGET'],[171,'Rams D/ST','DEF','INTEL'],
+    [186,'Alvin Kamara','RB','TARGET'],[197,'Malik Washington','WR','TARGET'],
+
+    // JUSTIN BOONE EXPERT LEAGUE DEPTH — actual pick numbers from the Sept. 2 Yahoo article.
+    [14,'Omarion Hampton','RB','EXPERT'],[19,'Kyren Williams','RB','EXPERT'],[20,'A.J. Brown','WR','EXPERT'],[21,'Ashton Jeanty','RB','EXPERT'],
+    [28,'DeVonta Smith','WR','EXPERT'],[30,'Zay Flowers','WR','EXPERT'],[32,'Jaylen Waddle','WR','EXPERT'],[33,'Jeremiyah Love','RB','EXPERT'],[35,'Rashee Rice','WR','EXPERT'],
+    [39,'Breece Hall','RB','EXPERT'],[40,'Garrett Wilson','WR','EXPERT'],[47,'Jameson Williams','WR','EXPERT'],
+    [50,'Parker Washington','WR','EXPERT'],[51,'Christian Watson','WR','EXPERT'],[53,'Quinshon Judkins','RB','EXPERT'],
+    [66,'Jaylen Warren','RB','EXPERT'],[67,'TreVeyon Henderson','RB','EXPERT'],[71,'Tony Pollard','RB','EXPERT'],
+    [77,'Carnell Tate','WR','EXPERT'],[79,'Alec Pierce','WR','EXPERT'],[83,'Kyle Monangai','RB','EXPERT'],[84,'Chris Godwin','WR','EXPERT'],
+    [85,'Jayden Reed','WR','EXPERT'],[87,"De'Zhaun Stribling",'WR','EXPERT'],[89,'Josh Downs','WR','EXPERT'],[93,'Quentin Johnston','WR','EXPERT'],
+    [97,'KC Concepcion','WR','EXPERT'],[98,'Matthew Golden','WR','EXPERT'],[102,"Wan'Dale Robinson",'WR','EXPERT'],[103,'Makai Lemon','WR','EXPERT'],[105,'Josh Jacobs','RB','EXPERT'],[107,'Romeo Doubs','WR','EXPERT'],
+    [109,'Chris Rodriguez','RB','EXPERT'],[110,'Jonah Coleman','RB','EXPERT'],[113,'Mike Washington','RB','EXPERT'],[118,'Jordyn Tyson','WR','EXPERT'],[120,'Jalen Coker','WR','EXPERT'],
+    [122,'Tre Tucker','WR','EXPERT'],[125,'Rashid Shaheed','WR','EXPERT'],[127,'Xavier Worthy','WR','EXPERT'],[132,'Tank Bigsby','RB','EXPERT'],
+    [135,'Denzel Boston','WR','EXPERT'],[137,'Dontayvion Wicks','WR','EXPERT'],[139,'Emmett Johnson','RB','EXPERT'],[140,'Zach Charbonnet','RB','EXPERT'],[141,'Kaelon Black','RB','EXPERT'],[142,'Tyjae Spears','RB','EXPERT'],[143,'Dylan Sampson','RB','EXPERT'],
+    [152,'Jaylin Noel','WR','EXPERT'],[155,'Tyrone Tracy Jr.','RB','EXPERT'],
+    [170,'Kayshon Boutte','WR','EXPERT'],[175,'Tank Dell','WR','EXPERT'],[177,"Ja'Kobi Lane",'WR','EXPERT'],[178,'Adonai Mitchell','WR','EXPERT'],
+  ].map(([rank,name,pos,source])=>({rank,name,pos,source,tier:Math.ceil(rank/12)}));
+
+  const SLOT_PROFILES = {
+    1:['Front of every tier.','Boone philosophy: use the advantage of picking first in a tier. Take the premium player, then plan for the long wait before your next turn.','Do not assume a back-of-tier player will make it all the way around.'],
+    2:['Near the front of every tier.','You can still attack premium tier values, but the next wait is long. Boone’s RB-cliff thinking matters more here than strict ADP.','Build RB/WR foundation first; QB/TE only when value is obvious.'],
+    3:['Boone decision point.','Rankings are a guide, not a script. If the RB tier will be gone before your next selection, reaching slightly for the last strong-volume back is justified.','Preferred opening shape: RB-WR-WR or WR-RB-WR.'],
+    4:['Early-middle of every tier.','Take the best value in your part of the tier and keep one eye on RB scarcity before the board comes back.','Avoid forcing a position just because of roster construction.'],
+    5:['Middle-slot flexibility.','This slot gives you access to both sides of most tiers. Stay flexible while respecting the RB drop-offs.','Preferred opening shape: balanced RB/WR.'],
+    6:['Middle of every tier.','Use the board. If RB dries up before your next pick, act now; if not, take the stronger WR/TE value.','By Round 5, aim for a solid RB/WR core.'],
+    7:['Hammer spot.','This is a strong place to pair a first-round cornerstone with the Round 2 RB pocket.','Round 2 RB value matters here.'],
+    8:['Back half of each tier.','You are closer to the turn, so slight reaches for players you will not see again are acceptable.','Do not wait for ADP permission if your guy will be gone.'],
+    9:['Back-half value.','Exploit falling players, but assume the very front of each tier is normally gone by your pick.','Prioritize realistic survivors, not wish-list names.'],
+    10:['Think in pairs.','Your picks are close to the turn. Treat consecutive selections as one roster-building decision and accept small reaches.','RB + WR is the default early shape.'],
+    11:['Turn leverage.','Take the best realistic survivor, then use the second pick to attack scarcity or positional edge.','Elite TE can be a legitimate turn play.'],
+    12:['The turn.','The first 11 players of a tier are usually gone. Start at the back of the tier and spill into the next one.','Take the two cornerstones you would hate to lose before the long wait.']
   };
 
-  const SLOT_NOTES = {
-    1:['Long-wait discipline.','At the front, assume a player you pass will not make it back 23 picks. Take the cornerstone, then plan the turn before it reaches you.'],
-    2:['Near-front discipline.','You still face a long wait. Favor scarce RB volume when RB and WR values are close.'],
-    3:['Boone decision slot.','Use tiers instead of raw rank. A small RB reach is acceptable if the remaining volume tier will disappear before your next pick.'],
-    4:['Early-middle flexibility.','Take the best player inside the RB/WR foundation rule and avoid reacting to positional runs.'],
-    5:['Middle-slot flexibility.','You can let value come to you. Do not force the fifth RB/WR pick to be a specific position if you already have two at each.'],
-    6:['True middle.','This is the easiest slot to stay balanced. Keep RB scarcity in mind, but do not turn every close call into an RB reach.'],
-    7:['Hammer spot.','Pair your Round-1 cornerstone with the best Round-2 RB/WR value and keep the first-five checkpoint in view.'],
-    8:['Back-half discipline.','Slight reaches are fine for players who will not survive the turn. Keep the plan, not ADP, in control.'],
-    9:['Back-half value.','Think about two picks at once. Secure one scarce piece and one best-value piece.'],
-    10:['Pair your picks.','Treat each trip near the turn as one two-pick decision: RB+WR, RB+RB, or WR+WR only when the value clearly supports it.'],
-    11:['Turn leverage.','You can make small controlled reaches because the board will swing 20+ picks before you return.'],
-    12:['Full turn strategy.','Choose two players you would hate to lose. Your pair should still respect the 2-RB / 2-WR minimum through five rounds.']
+  const ROUND_PLAN = {
+    1:{label:'CORNERSTONE',priority:['RB','WR'],modes:{RB:'PRIMARY',WR:'PRIMARY',TE:'WAIT',QB:'WAIT'},note:'Elite RB/WR only. Boone: rankings are a guide, and RB scarcity should affect the decision.',expert:'Build around the best realistic survivor in your part of Tier 1.'},
+    2:{label:'HAMMER RB VALUE',priority:['RB','WR','TE'],modes:{RB:'PRIMARY',WR:'FALLBACK',TE:'ELITE VALUE',QB:'WAIT'},note:'Boone sees this as the strongest early RB pocket. Attack RB unless a clearly better WR/elite-TE value falls.',expert:'Round 2 is the time to beat the RB cliff, not chase a back after it.'},
+    3:{label:'LEAN WR / VALUE ONLY',priority:['WR','RB','TE'],modes:{RB:'VALUE ONLY',WR:'PRIMARY',TE:'ELITE FALL',QB:'WAIT'},note:'The RBs get riskier. Prefer WR unless a trustworthy volume back or elite TE falls.',expert:'Boone’s expert room leaned WR here because the RB quality became shakier.'},
+    4:{label:'WR / ELITE TE',priority:['WR','TE','RB'],modes:{RB:'VALUE ONLY',WR:'PRIMARY',TE:'PRIMARY',QB:'WAIT'},note:'Do not force a bad RB. Elite-TE upside is worth considering when the RB value is not there.',expert:'Roster value matters more than blindly filling a position.'},
+    5:{label:'LAST STRONG RB WINDOW',priority:['RB','WR','TE'],modes:{RB:'PRIMARY',WR:'PRIMARY',TE:'VALUE',QB:'WAIT'},note:'Often the last strong window for dependable RB volume plus upside.',expert:'Boone treats Round 5 as a major RB decision point.'},
+    6:{label:'CORE FIRST, THEN QB/TE',priority:['RB','WR','TE','QB'],modes:{RB:'VALUE',WR:'PRIMARY',TE:'VALUE',QB:'IF CORE BUILT'},note:'If your RB/WR core is built, QB or TE becomes guilt-free. If not, keep filling the core.',expert:'Do not take QB merely because the round number says so.'},
+    7:{label:'FILL STARTERS',priority:['RB','WR','QB','TE'],modes:{RB:'VALUE',WR:'PRIMARY',TE:'VALUE',QB:'IF CORE BUILT'},note:'Keep filling starters and take the best upside value.',expert:'Stay flexible; the board decides whether this becomes QB/TE or more RB/WR.'},
+    8:{label:'GET YOUR GUYS',priority:['RB','WR','TE','QB'],modes:{RB:'UPSIDE',WR:'UPSIDE',TE:'VALUE',QB:'VALUE'},note:'Boone “Get Your Guys” territory. Take players you believe can beat the slot.',expert:'Conviction matters more than tiny ADP differences here.'},
+    9:{label:'BACKUP RB / QB VALUE',priority:['RB','QB','WR','TE'],modes:{RB:'UPSIDE',WR:'VALUE',TE:'VALUE',QB:'VALUE'},note:'Target contingent RB upside and late-QB discounts.',expert:'This is where waiting on QB can start paying off.'},
+    10:{label:'LATE-QB SWEET SPOT',priority:['QB','RB','WR','TE'],modes:{RB:'UPSIDE',WR:'VALUE',TE:'VALUE',QB:'PRIMARY'},note:'If you waited on QB, this is a strong place to attack.',expert:'Otherwise keep taking RB/WR upside.'},
+    11:{label:'BENCH UPSIDE',priority:['RB','WR','QB','TE'],modes:{RB:'UPSIDE',WR:'UPSIDE',TE:'VALUE',QB:'VALUE'},note:'Use bench spots on players whose roles can grow.',expert:'Upside over safe low-ceiling depth.'},
+    12:{label:'HANDCUFF / STACK VALUE',priority:['RB','WR','QB','TE'],modes:{RB:'UPSIDE',WR:'UPSIDE',TE:'VALUE',QB:'VALUE'},note:'Target contingency backs, cheap stacks and late breakouts.',expert:'One role change can make these picks matter.'},
+    13:{label:'LOTTERY TICKETS',priority:['RB','WR','TE','QB'],modes:{RB:'UPSIDE',WR:'UPSIDE',TE:'VALUE',QB:'VALUE'},note:'Keep chasing upside. Do not spend the pick on defense yet unless skill value is exhausted.',expert:'Late picks should have a path to becoming useful.'},
+    14:{label:'LAST SKILL / DEF',priority:['RB','WR','TE','DEF'],modes:{RB:'UPSIDE',WR:'UPSIDE',TE:'VALUE',QB:'WAIT'},note:'One last upside skill player is fine. Defense only enters now.',expert:'Do not draft defense early.'},
+    15:{label:'DEF / KICKER LAST',priority:['DEF','K'],modes:{RB:'LAST UPSIDE',WR:'LAST UPSIDE',TE:'WAIT',QB:'WAIT'},note:'Boone still wants DEF/K at the end, but the RB/WR boxes show your final upside alternatives if you choose to wait one more pick.',expert:'Do not sacrifice earlier upside picks for DEF/K.'}
   };
 
-  const POOLS = {
-    1:{
-      RB:['Jahmyr Gibbs','Bijan Robinson','Jonathan Taylor','Christian McCaffrey','James Cook III','Saquon Barkley'],
-      WR:["Ja'Marr Chase",'Puka Nacua','Amon-Ra St. Brown','Jaxon Smith-Njigba','CeeDee Lamb','Justin Jefferson']
-    },
-    2:{
-      RB:['Chase Brown','Omarion Hampton','Kenneth Walker III',"De'Von Achane",'Derrick Henry','Kyren Williams','Ashton Jeanty'],
-      WR:['A.J. Brown','Drake London','George Pickens','Nico Collins']
-    },
-    3:{
-      RB:['Travis Etienne Jr.','Javonte Williams','Jeremiyah Love'],
-      WR:['Chris Olave','DeVonta Smith','Zay Flowers','Jaylen Waddle','Tee Higgins','Rashee Rice','Ladd McConkey']
-    },
-    4:{
-      RB:["D'Andre Swift",'Breece Hall','Jadarian Price','Cam Skattebo'],
-      WR:['Tetairoa McMillan','Garrett Wilson','Emeka Egbuka','Luther Burden III','Jameson Williams']
-    },
-    5:{
-      RB:['Bucky Irving','Quinshon Judkins','David Montgomery','Bhayshul Tuten'],
-      WR:['Christian Watson','DJ Moore','Rome Odunze','Terry McLaurin']
-    },
-    6:{
-      RB:['Rhamondre Stevenson','Jaylen Warren','TreVeyon Henderson','J.K. Dobbins','MarShawn Lloyd'],
-      WR:['Mike Evans','Brian Thomas Jr.'],
-      QB:['Jalen Hurts','Lamar Jackson','Drake Maye','Joe Burrow'],
-      TE:['Tyler Warren','Sam LaPorta','Tucker Kraft']
-    },
-    7:{
-      RB:['Jonathon Brooks','Blake Corum','Chuba Hubbard','Kyle Monangai'],
-      WR:['Marvin Harrison Jr.','Carnell Tate','Courtland Sutton','DK Metcalf','Chris Godwin Jr.'],
-      QB:['Jalen Hurts','Lamar Jackson','Drake Maye','Joe Burrow'],
-      TE:['George Kittle','Kyle Pitts','Dalton Kincaid']
-    },
-    8:{
-      RB:['Jacory Croskey-Merritt','Jordan Mason','Rico Dowdle'],
-      WR:['Jayden Reed','Josh Downs','Quentin Johnston'],
-      QB:['Jayden Daniels','Caleb Williams'],
-      TE:['George Kittle','Kyle Pitts','Dalton Kincaid']
-    },
-    9:{
-      RB:['Kenny Gainwell','RJ Harvey'],
-      WR:['Jordan Addison',"Wan'Dale Robinson",'Michael Pittman Jr.','Romeo Doubs','Makai Lemon','KC Concepcion'],
-      QB:['Justin Herbert','Dak Prescott'],
-      TE:['Isaiah Likely','Travis Kelce']
-    },
-    10:{
-      RB:['Chris Rodriguez Jr.','Jonah Coleman','Rachaad White'],
-      WR:['Stefon Diggs'],
-      QB:['Trevor Lawrence','Brock Purdy','Matthew Stafford','Bo Nix'],
-      TE:['Isaiah Likely','Travis Kelce']
-    },
-    11:{
-      RB:['Tyler Allgeier','Keaton Mitchell','Woody Marks','Braelon Allen','Tank Bigsby'],
-      WR:['Jakobi Meyers','Tre Tucker','Rashid Shaheed','Xavier Worthy'],
-      QB:['Brock Purdy','Matthew Stafford','Bo Nix'],
-      TE:['Dallas Goedert','Jake Ferguson']
-    },
-    12:{
-      RB:['Brian Robinson Jr.','Emmett Johnson','Zach Charbonnet','Tyjae Spears','Dylan Sampson'],
-      WR:['Denzel Boston','Dontayvion Wicks'],
-      QB:['Matthew Stafford','Bo Nix'],
-      TE:['Dallas Goedert']
-    },
-    13:{RB:['Best upside RB / direct contingency back'],WR:['Best upside WR with a path to targets']},
-    14:{RB:['One final upside skill player if value remains'],WR:['One final upside skill player if value remains'],DEF:['Defense may enter here']},
-    15:{DEF:['Defense / streamer'],K:['Kicker — final round']}
+  const FALL_TRIGGERS = {
+    3:[{text:'IF BROCK BOWERS SURVIVES TO YOUR ROUND 3 PICK → TAKE HIM. He has fallen past his normal elite-TE window.'}],
+    4:[{text:'IF TREY McBRIDE SURVIVES TO YOUR ROUND 4 PICK → TAKE HIM. This is the value point to stop waiting.'}]
   };
 
-  const QB_LADDER = {
-    6:'Only if a clear fall: Hurts / Lamar / Maye / Burrow',
-    7:'Only if a clear fall: Hurts / Lamar / Maye / Burrow',
-    8:'Target: Jayden Daniels / Caleb Williams',
-    9:'Preferred value: Justin Herbert → Dak Prescott',
-    10:'Fallback: Trevor Lawrence → Brock Purdy → Matthew Stafford → Bo Nix'
-  };
+  const SOURCE_ORDER={TARGET:0,INTEL:1,EXPERT:2};
+  const overallPick=(slot,round)=>round%2?((round-1)*12+slot):(round*12-slot+1);
+  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
-  const TE_LADDER = {
-    6:'Target: Tyler Warren → Sam LaPorta → Tucker Kraft',
-    7:'Target: George Kittle → Kyle Pitts → Dalton Kincaid',
-    8:'Target: George Kittle → Kyle Pitts → Dalton Kincaid',
-    9:'Fallback: Isaiah Likely → Travis Kelce',
-    10:'Fallback: Isaiah Likely → Travis Kelce'
-  };
-
-  let activeSlot = 1;
-  let activePath = 'default';
-
-  function pathRoundRule(round) {
-    const path = PATHS[activePath];
-    if (round === 1) return {label:'ELITE CORNERSTONE',priority:'RB / WR',note:'Take the best elite RB or WR available. Do not start with QB or TE.'};
-
-    if (round === 2 && activePath === 'allen') return {label:'LOCK JOSH ALLEN',priority:'QB',note:'This is your one premium-QB exception. After this, Rounds 3–5 are RB/WR only.'};
-    if (round === 2 && activePath === 'bowers') return {label:'LOCK BROCK BOWERS',priority:'TE',note:'Take Bowers here only because you chose the premium-TE path. After this, Rounds 3–5 are RB/WR only.'};
-    if (round === 2 && activePath === 'mcbride') return {label:'LOCK TREY McBRIDE',priority:'TE',note:'This is an intentional reach. After this, there are no more luxury picks before the Round-5 checkpoint.'};
-
-    if (round <= 5) return {label:'FOUNDATION',priority:'RB / WR ONLY',note: activePath === 'default'
-      ? 'Keep building toward 3 RB + 2 WR or 2 RB + 3 WR. Minimum two of each by the end of Round 5.'
-      : 'Correction round. Build toward exactly 2 RB + 2 WR around your Round-2 QB/TE.'};
-
-    if (round === 6) return {label:'QB / TE VALUE OPENS',priority:activePath === 'allen' ? 'TE → RB/WR' : (activePath === 'bowers' || activePath === 'mcbride') ? 'QB → RB/WR' : 'TE / QB / RB-WR VALUE',note:'Your core should now be built. Start attacking value at the onesie positions without forcing either one.'};
-    if (round === 7) return {label:'VALUE, NOT PANIC',priority:activePath === 'allen' ? 'TE / RB / WR' : (activePath === 'bowers' || activePath === 'mcbride') ? 'QB / RB / WR' : 'QB / TE / RB / WR',note:'If a preferred QB/TE is not there, take another useful RB/WR and keep waiting.'};
-    if (round === 8) return {label:'MAIN QB/TE WINDOW',priority:'QB / TE VALUE',note:'This is where the late-QB and mid/late-TE plan starts paying off.'};
-    if (round === 9) return {label:'PREFERRED LATE-QB ZONE',priority:'QB → TE → UPSIDE',note:'Herbert and Dak are priority quarterback values if you still need QB.'};
-    if (round === 10) return {label:'FINISH STARTERS',priority:'QB / TE IF NEEDED',note:'Use the fallback ladders. If both starters are already set, take upside RB/WR.'};
-    if (round <= 13) return {label:'BENCH UPSIDE',priority:'RB HANDCUFF / UPSIDE WR',note:'Draft players whose roles can grow. Avoid low-ceiling bench clutter.'};
-    if (round === 14) return {label:'LAST SKILL / DEF',priority:'UPSIDE OR DEF',note:'Defense can enter now. Do not move it earlier just to draft a name.'};
-    return {label:'KICKER LAST',priority:'K / DEF',note:'Final round only for kicker; stream defense when useful.'};
+  function availabilityWindow(overall,round){
+    const fall=round<=4?4:round<=8?7:10;
+    const reach=round<=4?12:round<=8?18:28;
+    return {min:Math.max(1,overall-fall),max:overall+reach};
   }
 
-  function box(pos, title, names, mode='VALUE') {
-    const cls = `pos-${pos.toLowerCase()}`;
-    const body = names && names.length
-      ? names.slice(0,7).map(name => `<div class="position-option simple"><div class="position-name">${esc(name)}</div><div class="position-meta">${esc(mode)}</div></div>`).join('')
-      : `<div class="wait-text">WAIT — do not spend this round here.</div>`;
-    return `<section class="position-box ${cls} ${names && names.length ? '' : 'wait'}"><div class="position-title"><b>${esc(pos)}</b><span>${esc(title)}</span></div>${body}</section>`;
+  function availabilityLabel(rank,overall){
+    const d=rank-overall;
+    if(d<-4)return 'IF STILL THERE';
+    if(d<=3)return 'RIGHT IN RANGE';
+    if(d<=10)return 'REALISTIC';
+    if(d<=18)return 'REACH';
+    return 'DEEP REACH';
   }
 
-  function specialRoundTwoBoxes() {
-    const pool = POOLS[2];
-    if (activePath === 'allen') return [
-      box('QB','LOCK',['Josh Allen'],'ROUND-2 EXCEPTION'),
-      box('RB','REFERENCE ONLY',pool.RB,'ONLY IF YOU ABANDON ALLEN PATH'),
-      box('WR','REFERENCE ONLY',pool.WR,'ONLY IF YOU ABANDON ALLEN PATH'),
-      box('TE','WAIT',[])
-    ];
-    if (activePath === 'bowers') return [
-      box('TE','LOCK',['Brock Bowers'],'ROUND-2 EXCEPTION'),
-      box('RB','REFERENCE ONLY',pool.RB,'ONLY IF YOU ABANDON BOWERS PATH'),
-      box('WR','REFERENCE ONLY',pool.WR,'ONLY IF YOU ABANDON BOWERS PATH'),
-      box('QB','WAIT',[])
-    ];
-    if (activePath === 'mcbride') return [
-      box('TE','LOCK',['Trey McBride'],'INTENTIONAL REACH'),
-      box('RB','REFERENCE ONLY',pool.RB,'ONLY IF YOU ABANDON McBRIDE PATH'),
-      box('WR','REFERENCE ONLY',pool.WR,'ONLY IF YOU ABANDON McBRIDE PATH'),
-      box('QB','WAIT',[])
-    ];
-    return [box('RB','PRIMARY',pool.RB),box('WR','PRIMARY',pool.WR),box('TE','WAIT',[]),box('QB','WAIT',[])];
+  function candidatesFor(round,pos,overall,recent){
+    const mode=ROUND_PLAN[round].modes[pos]||'WAIT';
+    if(mode==='WAIT')return {mode,options:[]};
+
+    const limit=(pos==='RB'||pos==='WR')?4:2;
+    const eligible=p=>p.pos===pos && p.tier===round && (!recent.has(p.name) || round-recent.get(p.name)>2);
+
+    // STRICT TIER RULE: normal Round N choices must be Tier N.
+    // Never pull a later-tier player backward just to fill four slots.
+    const candidates=PLAYERS.filter(eligible).sort((a,b)=>{
+      const da=Math.abs(a.rank-overall),db=Math.abs(b.rank-overall);
+      const sa=SOURCE_ORDER[a.source]??9,sb=SOURCE_ORDER[b.source]??9;
+      return da-db||sa-sb||a.rank-b.rank;
+    });
+
+    return {mode,options:candidates.slice(0,limit).map(p=>({...p,status:availabilityLabel(p.rank,overall)}))};
   }
 
-  function roundBoxes(round) {
-    const pool = POOLS[round] || {};
-    if (round === 2 && activePath !== 'default') return specialRoundTwoBoxes();
-
-    if (round <= 5) {
-      return [
-        box('RB','PRIMARY',pool.RB || []),
-        box('WR','PRIMARY',pool.WR || []),
-        box('TE','WAIT',[]),
-        box('QB','WAIT',[])
-      ];
-    }
-
-    if (round >= 6 && round <= 10) {
-      const qbDone = activePath === 'allen';
-      const teDone = activePath === 'bowers' || activePath === 'mcbride';
-      return [
-        box('RB','VALUE / UPSIDE',pool.RB || []),
-        box('WR','VALUE / UPSIDE',pool.WR || []),
-        qbDone ? box('QB','DONE — ALLEN',[]) : box('QB',QB_LADDER[round] || 'VALUE',pool.QB || []),
-        teDone ? box('TE','DONE — TE1',[]) : box('TE',TE_LADDER[round] || 'VALUE',pool.TE || [])
-      ];
-    }
-
-    if (round === 14) return [box('RB','LAST UPSIDE',pool.RB || []),box('WR','LAST UPSIDE',pool.WR || []),box('QB','WAIT',[]),box('TE','WAIT',[])];
-    if (round === 15) return [box('QB','WAIT',[]),box('TE','WAIT',[]),box('RB','WAIT',[]),box('WR','WAIT',[])];
-
-    return [box('RB','HANDCUFF / UPSIDE',pool.RB || []),box('WR','UPSIDE',pool.WR || []),box('QB','ONLY IF NEEDED',pool.QB || []),box('TE','ONLY IF NEEDED',pool.TE || [])];
+  function playerRow(p){
+    const star=p.source==='TARGET'?'★ ':'';
+    const source=p.source==='TARGET'?'YOUR TARGET':p.source==='INTEL'?'INTEL':'EXPERT';
+    const rankLabel=p.source==='EXPERT'?'E#':'Y#';
+    return `<div class="position-option"><div class="position-name">${star}${esc(p.name)}</div><div class="position-meta"><b>TIER ${p.tier}</b> · ${rankLabel}${p.rank} · ${esc(p.status)} · ${source}</div></div>`;
   }
 
-  function renderCheckpoint() {
-    const path = PATHS[activePath];
-    const items = activePath === 'default'
-      ? [
-          ['R1–R5','RB / WR ONLY','Five foundation picks.'],
-          ['MINIMUM','2 RB + 2 WR','Never leave Round 5 below this.'],
-          ['IDEAL','3 RB + 2 WR','When RB value wins the fifth-pick decision.'],
-          ['ALSO GOOD','2 RB + 3 WR','When WR value wins the fifth-pick decision.']
-        ]
-      : [
-          ['ROUND 1','ELITE RB / WR','Start with a cornerstone.'],
-          ['ROUND 2',activePath === 'allen' ? 'JOSH ALLEN' : activePath === 'bowers' ? 'BROCK BOWERS' : 'TREY McBRIDE','Your chosen exception.'],
-          ['ROUNDS 3–5','RB / WR ONLY','No second luxury pick.'],
-          ['END OF R5','2 RB + 2 WR','Plus your Round-2 QB/TE.']
-        ];
-    $('checkpoint').innerHTML = items.map(([k,v,s]) => `<article><b>${esc(k)}</b><strong>${esc(v)}</strong><span>${esc(s)}</span></article>`).join('');
+  function positionBox(pos,result){
+    const {mode,options}=result;
+    const posClass=`pos-${pos.toLowerCase()}`;
+    if(mode==='WAIT')return `<section class="position-box ${posClass} wait"><div class="position-title"><b>${pos}</b><span>WAIT</span></div><div class="wait-text">Boone build says do not spend this round here.</div></section>`;
+    const body=options.length?options.map(playerRow).join(''):`<div class="wait-text">No approved ${pos} fits this pick window — do not force it.</div>`;
+    return `<section class="position-box ${posClass}"><div class="position-title"><b>${pos}</b><span>${esc(mode)} · ${options.length} CHOICES</span></div>${body}</section>`;
   }
 
-  function render() {
-    const path = PATHS[activePath];
-    const [slotHeadline, slotApproach] = SLOT_NOTES[activeSlot];
+  function triggerBlock(round){
+    const list=FALL_TRIGGERS[round]||[];
+    return list.length?`<div class="fall-triggers">${list.map(t=>`<div class="fall-trigger">${esc(t.text)}</div>`).join('')}</div>`:'';
+  }
 
-    document.querySelectorAll('#slotTabs button').forEach(btn => btn.classList.toggle('active', Number(btn.dataset.slot) === activeSlot));
-    document.querySelectorAll('#pathTabs button').forEach(btn => btn.classList.toggle('active', btn.dataset.path === activePath));
+  function render(slot){
+    document.querySelectorAll('#slotTabs button').forEach(b=>b.classList.toggle('active',Number(b.dataset.slot)===slot));
+    const [headline,approach,build]=SLOT_PROFILES[slot];
+    $('slotTitle').textContent=`PICK ${slot}`;
+    $('slotHeadline').textContent=headline;
+    $('slotApproach').textContent=approach;
+    $('slotBuild').textContent=build;
 
-    $('slotTitle').textContent = `PICK ${activeSlot} · ${path.short}`;
-    $('slotHeadline').textContent = `${slotHeadline} ${path.headline}`;
-    $('slotApproach').textContent = `${slotApproach} ${path.approach}`;
-    $('slotBuild').textContent = path.build;
-    $('pathWarning').hidden = !path.warning;
-    $('pathWarning').textContent = path.warning;
-    renderCheckpoint();
+    const recent=new Map();
+    const cards=[];
 
-    const cards = [];
-    for (let round = 1; round <= 15; round++) {
-      const rule = pathRoundRule(round);
-      const pick = overallPick(activeSlot, round);
-      const boxes = roundBoxes(round);
-      let check = '';
-      if (round === 5) check = activePath === 'default'
-        ? 'STOP AND CHECK: Do I have at least 2 RB and 2 WR? If yes, Round 6 can open QB/TE value. If no, keep fixing RB/WR.'
-        : `STOP AND CHECK: Do I have ${activePath === 'allen' ? 'Josh Allen' : activePath === 'bowers' ? 'Brock Bowers' : 'Trey McBride'} + 2 RB + 2 WR? If not, keep fixing the foundation.`;
-      if (round === 9 && activePath !== 'allen') check = 'QB PRIORITY: Justin Herbert first, Dak Prescott second if both are available in this value zone.';
-      if (round === 10 && activePath === 'default') check = 'By now, finish whichever starter is still missing at QB or TE. Do not draft a backup onesie before your starting lineup is handled.';
+    for(let round=1;round<=15;round++){
+      const overall=overallPick(slot,round),plan=ROUND_PLAN[round],results={};
+      for(const pos of POSITIONS)results[pos]=candidatesFor(round,pos,overall,recent);
 
-      cards.push(`<article class="round-card ${round === 2 && activePath !== 'default' ? 'locked' : ''}">
-        <div class="round-head"><b>ROUND ${round}</b><span>Your snake pick = #${pick}<br>${esc(rule.label)}</span></div>
-        <div class="focus">ACTION: ${esc(rule.priority)}</div>
-        <div class="priority-banner">${esc(rule.note)}</div>
-        <div class="position-grid">${boxes.join('')}</div>
-        ${check ? `<div class="round-check">${esc(check)}</div>` : ''}
+      Object.values(results).forEach(r=>r.options.forEach(p=>recent.set(p.name,round)));
+
+      const ordered=plan.priority.filter(p=>POSITIONS.includes(p));
+      const rest=POSITIONS.filter(p=>!ordered.includes(p));
+      const all=[...ordered,...rest];
+
+      cards.push(`<article class="round-card">
+        <div class="round-head"><b>ROUND ${round}</b><span>Your snake pick ≈ #${overall}<br>Tier ${round} · ${esc(plan.label)}</span></div>
+        <div class="focus">BOONE PRIORITY: ${plan.priority.join(' → ')}</div>
+        ${triggerBlock(round)}
+        <div class="position-grid">${all.map(pos=>positionBox(pos,results[pos])).join('')}</div>
+        <div class="round-note">${esc(plan.note)}</div>
+        <div class="expert-note">${esc(plan.expert)}</div>
       </article>`);
     }
-    $('rounds').innerHTML = cards.join('');
+
+    $('rounds').innerHTML=cards.join('');
   }
 
-  $('slotTabs').innerHTML = Array.from({length:12}, (_,i) => `<button type="button" data-slot="${i+1}">PICK ${i+1}</button>`).join('');
-  $('slotTabs').querySelectorAll('button').forEach(btn => btn.addEventListener('click', () => {activeSlot = Number(btn.dataset.slot); render();}));
-
-  $('pathTabs').innerHTML = Object.entries(PATHS).map(([key,path]) => `<button type="button" data-path="${key}" class="${path.recommended ? 'recommended' : ''}">${esc(path.label)}${path.recommended ? '<br><small>RECOMMENDED</small>' : ''}</button>`).join('');
-  $('pathTabs').querySelectorAll('button').forEach(btn => btn.addEventListener('click', () => {activePath = btn.dataset.path; render();}));
-
-  render();
+  $('slotTabs').innerHTML=Array.from({length:12},(_,i)=>`<button type="button" data-slot="${i+1}">PICK ${i+1}</button>`).join('');
+  $('slotTabs').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>render(Number(b.dataset.slot))));
+  render(1);
 })();

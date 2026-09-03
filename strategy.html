@@ -4,73 +4,40 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#f5f7fb">
-  <title>2026 Fantasy Draft Action Plan</title>
+  <title>2026 Draft Strategy Study Guide</title>
   <link rel="stylesheet" href="strategy.css">
-  <style>
-    .action-rule{margin:18px 0 14px;border:2px solid #15803d;border-radius:16px;background:#f0fdf4;padding:18px}.action-rule h2{margin:0 0 7px;font-size:22px;color:#166534}.action-rule p{margin:5px 0;color:#14532d;font-size:14px;line-height:1.5;font-weight:750}.action-rule strong{font-size:16px}.path-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:14px 0}.path-tabs button{border:1px solid #cbd5e1;border-radius:12px;background:#fff;color:#334155;padding:12px 9px;font-size:12px;font-weight:950;line-height:1.25}.path-tabs button.active{background:#0f172a;border-color:#0f172a;color:#fff}.path-tabs button.recommended{box-shadow:inset 0 -3px 0 #15803d}.checkpoint{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:0 0 16px}.checkpoint article{border:1px solid #cbd5e1;border-radius:13px;background:#fff;padding:13px}.checkpoint b{display:block;font-size:12px;color:#64748b;margin-bottom:5px}.checkpoint strong{display:block;font-size:15px;line-height:1.25}.checkpoint span{display:block;margin-top:5px;font-size:11px;line-height:1.4;color:#64748b}.ladder-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:0 0 16px}.ladder{border:1px solid #cbd5e1;border-radius:16px;background:#fff;padding:16px}.ladder h3{margin:0 0 10px;font-size:16px}.ladder-row{display:grid;grid-template-columns:80px 1fr;gap:10px;border-top:1px solid #e2e8f0;padding:9px 0;font-size:12px;line-height:1.4}.ladder-row:first-of-type{border-top:0}.ladder-row b{color:#475569}.ladder-row span{font-weight:800}.path-warning{margin:10px 0 0;padding:10px 12px;border-radius:10px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;font-size:12px;line-height:1.45;font-weight:800}.round-card.locked{border-color:#f59e0b;box-shadow:0 0 0 1px #f59e0b inset}.position-option.simple .position-meta{font-size:10px}.priority-banner{margin:10px 0;padding:10px;border-radius:10px;background:#eff6ff;border:1px solid #bfdbfe;font-size:12px;font-weight:900;color:#1e3a8a;line-height:1.4}.round-check{margin-top:10px;padding:9px 10px;border-radius:9px;background:#f8fafc;border:1px solid #e2e8f0;font-size:11px;font-weight:850;color:#475569;line-height:1.4}@media(max-width:900px){.path-tabs,.checkpoint{grid-template-columns:repeat(2,1fr)}.ladder-grid{grid-template-columns:1fr}}@media(max-width:520px){.path-tabs,.checkpoint{grid-template-columns:1fr}.action-rule h2{font-size:19px}.ladder-row{grid-template-columns:70px 1fr}}
-  </style>
 </head>
 <body>
   <main class="guide">
     <header class="guide-header">
       <div class="header-row">
-        <div>
-          <h1>2026 DRAFT ACTION PLAN</h1>
-          <p>12-team half-PPR · pick your draft slot, then follow one opening path without panicking or changing the plan mid-draft.</p>
-        </div>
+        <div><h1>2026 DRAFT STUDY GUIDE</h1><p>Manual 12-team half-PPR cheat sheet · choose your draft slot and study the round-by-round plan.</p></div>
         <a class="back" href="index.html">← INTEL APP</a>
       </div>
       <div id="slotTabs" class="slot-tabs"></div>
     </header>
 
-    <section class="action-rule">
-      <h2>DEFAULT RULE: FIRST FIVE PICKS = RB / WR FOUNDATION</h2>
-      <p><strong>Leave Round 5 with at least 2 RB + 2 WR.</strong> Your fifth skill player is whichever position gives you the best value: 3 RB + 2 WR or 2 RB + 3 WR.</p>
-      <p>Boone's 2026 warning is the RB cliff: secure at least two, potentially three running backs before Round 6. Do not force QB or TE just because a round number arrives.</p>
-    </section>
-
-    <div id="pathTabs" class="path-tabs"></div>
-
     <section class="slot-summary">
       <article class="summary-card">
-        <h2 id="slotTitle">PICK 1 · DEFAULT ACTION PLAN</h2>
+        <h2 id="slotTitle">PICK 1</h2>
         <p id="slotHeadline"></p>
         <p id="slotApproach"></p>
         <div id="slotBuild" class="build"></div>
-        <div id="pathWarning" class="path-warning" hidden></div>
       </article>
       <aside class="source-card">
-        <h3>Why this plan changed</h3>
-        <p><b>Justin Boone:</b> get at least two and potentially three RBs before Round 6; waiting on QB is viable because the position is deep.</p>
-        <p><b>Current expert-draft market:</b> Brock Bowers went #18, Josh Allen #31, Trey McBride #44. That makes Bowers in Round 2 market-consistent, Allen in Round 2 a deliberate reach, and McBride in Round 2 a much bigger reach.</p>
-        <p><b>Core rule:</b> if you spend Round 2 on Allen/Bowers/McBride, Rounds 3–5 become RB/WR correction rounds. Do not pay an early premium at both QB and TE.</p>
-        <p><a href="https://sports.yahoo.com/fantasy/article/fantasy-football-justin-boones-takeaways-from-the-yahoo-fantasy-expert-league-draft-161424586.html" target="_blank" rel="noopener">Boone expert draft</a> · <a href="https://ca.sports.yahoo.com/video/three-last-minute-tips-fantasy-182255651.html" target="_blank" rel="noopener">Boone last-minute rules</a> · <a href="https://sports.yahoo.com/fantasy/article/2026-fantasy-football-qb-preview-draft-strategy-rankings-fades-and-sleepers-173310318.html" target="_blank" rel="noopener">Boone QB strategy</a></p>
+        <h3>Yahoo expert signals used</h3>
+        <p><b>Justin Boone:</b> strong Round 2 RB tier; Round 3 RBs carry more risk; Round 5 is a key final window for dependable RB volume; QB can be pushed later.</p>
+        <p><b>QB rule:</b> Rounds 1–2 wait. Round 3 is Josh Allen only. Lamar Jackson becomes live in Round 4. Rounds 5–6 are preferred-QB value windows, Rounds 7–10 are the main value-QB zone, and a second QB is only worth a bench spot when your starter is risky or the stack is unusually strong.</p>
+        <p><b>Scott Pianowski:</b> Amon-Ra early; Chase Brown ideal Round 2; Derrick Henry pivot; Ladd McConkey Round 4; Blake Corum late upside.</p>
+        <p><b>Joel Smyth:</b> Javonte late Round 3; Etienne/Bucky volume values; Bo Nix late-QB punt; Nico/Olave upgrades; Tucker Kraft around Round 6.</p>
+        <p><a href="https://sports.yahoo.com/fantasy/article/fantasy-football-justin-boones-takeaways-from-the-yahoo-fantasy-expert-league-draft-161424586.html" target="_blank" rel="noopener">Boone expert draft</a> · <a href="https://sports.yahoo.com/fantasy/article/fantasy-football-scott-pianowski-shares-his-my-guys--preferred-players-hes-drafting-often-for-2026-155507485.html" target="_blank" rel="noopener">Pianowski My Guys</a> · <a href="https://sports.yahoo.com/fantasy/article/players-at-each-position-joel-smyth-has-changed-his-mind-on-the-most-throughout-training-camp-and-preseason-for-2026-fantasy-football-195003645.html" target="_blank" rel="noopener">Smyth camp changes</a></p>
       </aside>
     </section>
 
-    <section class="checkpoint" id="checkpoint"></section>
-
-    <section class="ladder-grid">
-      <article class="ladder">
-        <h3>QB FALLBACK LADDER — IF YOU DON'T TAKE ALLEN EARLY</h3>
-        <div class="ladder-row"><b>R6–7</b><span>Only if they fall: Jalen Hurts → Lamar Jackson → Drake Maye → Joe Burrow</span></div>
-        <div class="ladder-row"><b>R8</b><span>Jayden Daniels → Caleb Williams</span></div>
-        <div class="ladder-row"><b>R9</b><span><strong>Justin Herbert → Dak Prescott</strong> — preferred value zone</span></div>
-        <div class="ladder-row"><b>R10+</b><span>Trevor Lawrence → Brock Purdy → Matthew Stafford → Bo Nix</span></div>
-        <div class="ladder-row"><b>STACK</b><span>Stafford gets a bump if you already drafted Puka Nacua.</span></div>
-      </article>
-      <article class="ladder">
-        <h3>TE FALLBACK LADDER — IF YOU DON'T TAKE BOWERS / McBRIDE EARLY</h3>
-        <div class="ladder-row"><b>R6</b><span>Tyler Warren → Sam LaPorta → Tucker Kraft</span></div>
-        <div class="ladder-row"><b>R7–8</b><span><strong>George Kittle → Kyle Pitts → Dalton Kincaid</strong></span></div>
-        <div class="ladder-row"><b>R9–10</b><span>Isaiah Likely → Travis Kelce</span></div>
-        <div class="ladder-row"><b>RULE</b><span>Once you draft your TE1, stop spending useful draft capital on a backup TE.</span></div>
-      </article>
-    </section>
-
     <section id="rounds" class="rounds"></section>
-    <p class="legend"><b>Action rule:</b> follow roster construction before chasing a name. Default first-five checkpoint is 2 RB + 2 WR minimum. If you choose Allen/Bowers/McBride in Round 2, the checkpoint changes to that player + 2 RB + 2 WR by the end of Round 5. DEF and K stay in the final two rounds.</p>
+    <p class="legend"><b>How to use this:</b> this is a manual study guide, not a live draft engine. The three names are the preferred options for the area of the board where your pick lands. If the first name is gone, move to the next option and follow the position/focus note rather than forcing a bad pick.</p>
   </main>
   <script src="draft-strategy.js" defer></script>
+  <script src="Quarterbacks.js" defer></script>
 </body>
 </html>
