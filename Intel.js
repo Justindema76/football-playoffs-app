@@ -57,6 +57,11 @@
     return item?.recommendation||item?.what_changed||'';
   }
 
+  function tierFor(player){
+    const rank=Number(player?.yahoo_rank);
+    return Number.isInteger(rank)&&rank>0?Math.ceil(rank/12):null;
+  }
+
   function sourceHtml(sourceNote,esc){
     const note=String(sourceNote||'').trim();
     if(!note)return '';
@@ -115,6 +120,7 @@
     matchesSearch,
     latest,
     latestContext,
+    tierFor,
     renderPlayerDetails,
     render
   });
