@@ -81,10 +81,12 @@
     return Number.isNaN(d.getTime())?'':`<small>Checked ${esc(d.toLocaleString())}</small>`;
   }
 
-  function renderPlayerDetails(player,esc,tagClass){
+  function renderPlayerDetails(player,esc,tagClass,options={}){
     const items=sort(player?.intel_items||[]);
     if(!items.length)return '';
-    return `<details class="player-details" ${items.length===1?'open':''}><summary>Current Intel (${items.length})</summary>${items.map(item=>`<div class="detail-item"><b>${esc(item.action||'MONITOR')} · ${esc(item.priority||'')}</b><div>${esc(item.what_changed||'')}</div>${item.recommendation?`<div><b>WHAT TO DO:</b> ${esc(item.recommendation)}</div>`:''}${item.draft_tags?.length?`<div class="tags">${item.draft_tags.map(tag=>`<span class="tag ${tagClass(tag)}">${esc(tag)}</span>`).join('')}</div>`:''}${sourceHtml(item.source_note,esc)}${checkedHtml(item,esc)}</div>`).join('')}</details>`;
+    const openSingle=options.openSingle!==false;
+    const openAttr=openSingle&&items.length===1?' open':'';
+    return `<details class="player-details"${openAttr}><summary>Current Intel (${items.length})</summary>${items.map(item=>`<div class="detail-item"><b>${esc(item.action||'MONITOR')} · ${esc(item.priority||'')}</b><div>${esc(item.what_changed||'')}</div>${item.recommendation?`<div><b>WHAT TO DO:</b> ${esc(item.recommendation)}</div>`:''}${item.draft_tags?.length?`<div class="tags">${item.draft_tags.map(tag=>`<span class="tag ${tagClass(tag)}">${esc(tag)}</span>`).join('')}</div>`:''}${sourceHtml(item.source_note,esc)}${checkedHtml(item,esc)}</div>`).join('')}</details>`;
   }
 
   function render({state,$,esc,normPos,tagClass,matches}){
