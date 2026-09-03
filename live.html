@@ -1,61 +1,89 @@
 <!doctype html>
-<html lang="en" class="light">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#f5f7fb">
+  <meta name="theme-color" content="#07111f">
   <title>Fantasy Football 2026 — Live Draft</title>
   <link rel="stylesheet" href="live.css">
+  <link rel="stylesheet" href="mobile-nav.css">
 </head>
 <body>
   <div class="live-toolbar-wrap">
     <header class="live-header">
       <div class="brand">
-        <h1>LIVE DRAFT</h1>
-        <p>Yahoo extension feed — separate from your master board</p>
+        <span class="live-kicker">2026 FANTASY COMMAND CENTER</span>
+        <h1>LIVE DRAFT VIEWER</h1>
+        <p>Yahoo draft feed · your slot, your next pick, your queue</p>
       </div>
       <div class="status-wrap">
         <span id="syncStatus" class="status syncing">SYNCING</span>
-        <a class="master-link" href="/">MASTER</a>
+        <a class="header-link" href="strategy.html">STUDY</a>
+        <a class="header-link" href="index.html#draft">DRAFT BOARD</a>
       </div>
     </header>
 
-    <section class="summary">
+    <section class="draft-command" aria-label="Draft position command bar">
+      <article class="command-card slot-card">
+        <span>MY DRAFT SLOT</span>
+        <b id="draftSlot">—</b>
+        <small id="slotStatus">Waiting for Yahoo position</small>
+      </article>
+      <article class="command-card next-card">
+        <span>NEXT PICK</span>
+        <b id="nextPick">—</b>
+        <small id="picksAway">Waiting for draft</small>
+      </article>
+      <article class="command-card">
+        <span>CURRENT ROUND</span>
+        <b id="currentRound">—</b>
+        <small id="leagueSize">12-team snake</small>
+      </article>
+      <article class="command-card">
+        <span>DRAFT IS AT</span>
+        <b id="overallPick">—</b>
+        <small>overall selection</small>
+      </article>
+    </section>
+
+    <section class="summary" aria-label="Player availability summary">
       <div class="stat"><b id="availableCount">—</b><span>AVAILABLE</span></div>
-      <div class="stat"><b id="goneCount">—</b><span>GONE</span></div>
-      <div class="stat"><b id="starCount">—</b><span>STARRED LEFT</span></div>
-      <div class="stat"><b id="lastUpdate">—</b><span>LAST CHANGE</span></div>
+      <div class="stat"><b id="goneCount">—</b><span>DRAFTED</span></div>
+      <div class="stat"><b id="starCount">—</b><span>MY TARGETS LEFT</span></div>
+      <div class="stat"><b id="lastUpdate">—</b><span>LAST PICK</span></div>
     </section>
 
     <section class="controls">
       <input id="search" type="search" placeholder="Search player, team, position..." autocomplete="off">
       <div class="segmented" role="tablist">
-        <button class="active" data-view="starred">STARRED</button>
+        <button class="active" data-view="starred">MY TARGETS</button>
         <button data-view="all">ALL</button>
-        <button data-view="gone">GONE</button>
-        <button id="mineTab" data-view="mine" hidden>MINE</button>
+        <button data-view="gone">DRAFTED</button>
+        <button id="mineTab" data-view="mine" hidden>MY PICKS</button>
       </div>
       <div class="sort-wrap">
         <label for="sortBy" class="sort-label">SORT</label>
         <select id="sortBy">
           <option value="rank">Yahoo Rank</option>
-          <option value="name">Name (A–Z)</option>
+          <option value="name">Name</option>
           <option value="pos">Position</option>
           <option value="team">Team</option>
         </select>
         <button id="sortDir" class="sort-dir" title="Toggle ascending/descending" aria-label="Toggle sort direction">↑</button>
       </div>
       <button id="refresh" class="refresh">REFRESH</button>
-      <button id="reset" class="reset">RESET</button>
+      <button id="reset" class="reset">RESET DRAFT</button>
     </section>
 
-    <p id="roomTag" class="room-tag" hidden></p>
+    <p id="roomTag" class="room-tag"></p>
     <section id="notice" class="notice" hidden></section>
   </div>
 
   <main class="live-shell">
     <section id="players" class="players"></section>
   </main>
+
   <script src="live.js" defer></script>
+  <script src="mobile-nav.js" defer></script>
 </body>
 </html>
