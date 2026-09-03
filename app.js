@@ -104,7 +104,7 @@
       const plan=plannerByKey.get(key)||plannerByName.get(name)||{};
       const intel=intelByName.get(name)||[];
       const suggestions=(suggestionsByKey.get(key)||suggestionsByKey.get(name)||[]).slice().sort(suggestionSort);
-      return {...p,user_target:!!t.user_target,user_tags:t.user_tags||[],user_note:t.user_note||null,planner_tags:plan.tags||[],planner_reason:plan.reason||'',planner_last_confirmed_date:plan.last_confirmed_date||null,planner_updated_at:plan.updated_at||null,intel_items:intel,suggestions};
+      return {...p,tier:intelApi.tierFor(p),user_target:!!t.user_target,user_tags:t.user_tags||[],user_note:t.user_note||null,planner_tags:plan.tags||[],planner_reason:plan.reason||'',planner_last_confirmed_date:plan.last_confirmed_date||null,planner_updated_at:plan.updated_at||null,intel_items:intel,suggestions};
     }).sort(sortYahoo);
 
     state.weather=R.weather.data;
@@ -163,14 +163,14 @@
   function renderPlayers(targetOnly){
     const a=visiblePlayers(targetOnly);
     $('pageMeta').textContent=`${a.length} canonical Yahoo players`;
-    $('content').innerHTML=`${targetOnly?'':`<div class="player-toolbar"><span class="source-badge">Same Yahoo player record used by Players + Draft + Intel</span><button id="addMissing" class="add-missing">+ ADD MISSING YAHOO PLAYER</button></div>`}<div class="list">${a.map(playerCard).join('')||'<div class="empty">No players match.</div>'}</div>`;
+    $('content').innerHTML=`${targetOnly?'':`<div class="player-toolbar"><span class="source-badge">Same canonical player record used by Players + Draft + Running Backs + Wide Receivers + Intel</span><button id="addMissing" class="add-missing">+ ADD MISSING YAHOO PLAYER</button></div>`}<div class="list">${a.map(playerCard).join('')||'<div class="empty">No players match.</div>'}</div>`;
     bindTargets();
     if(!targetOnly)$('addMissing')?.addEventListener('click',openManual);
   }
 
   function playerCard(p){
     const po=normPos(p.position),ts=tags(p);
-    return `<article class="player-card ${p.user_target?'targeted':''}"><div class="card-top"><span class="pos ${po}">${po}</span><div style="display:flex;gap:7px;align-items:center"><span class="rank">Yahoo #${esc(p.yahoo_rank??'—')}</span><button class="target-button ${p.user_target?'on':''}" data-key="${esc(p.player_key)}" data-target="${p.user_target?'false':'true'}">${p.user_target?'TARGETED':'TARGET'}</button></div></div><div class="player-name">${esc(p.yahoo_name||p.display_name)}</div><div class="player-team-line"><span class="team-badge">${esc(p.team||'FA')}</span><span class="player-meta">Yahoo ranking order</span></div>${ts.length?`<div class="tags">${ts.map(t=>`<span class="tag ${tagClass(t)}">${esc(t)}</span>`).join('')}</div>`:''}${renderPlayerContext(p)}</article>`;
+    return `<article class="player-card ${p.user_target?'targeted':''}"><div class="card-top"><span class="pos ${po}">${po}</span><div style="display:flex;gap:7px;align-items:center"><span class="tier-badge">TIER ${esc(p.tier??'—')}</span><span class="rank">Yahoo #${esc(p.yahoo_rank??'—')}</span><button class="target-button ${p.user_target?'on':''}" data-key="${esc(p.player_key)}" data-target="${p.user_target?'false':'true'}">${p.user_target?'TARGETED':'TARGET'}</button></div></div><div class="player-name">${esc(p.yahoo_name||p.display_name)}</div><div class="player-team-line"><span class="team-badge">${esc(p.team||'FA')}</span><span class="player-meta">Yahoo ranking order</span></div>${ts.length?`<div class="tags">${ts.map(t=>`<span class="tag ${tagClass(t)}">${esc(t)}</span>`).join('')}</div>`:''}${renderPlayerContext(p)}</article>`;
   }
 
   function bindTargets(){$('content').querySelectorAll('.target-button').forEach(b=>b.onclick=()=>toggleTarget(b.dataset.key,b.dataset.target==='true'))}
@@ -209,7 +209,7 @@
   function draftRow(p){
     const po=normPos(p.position),ts=tags(p).filter(t=>t!=='TARGET');
     const context=p.planner_reason||intelApi.latestContext(p.intel_items||[]);
-    return `<div class="draft-row ${po} ${p.user_target?'targeted':''}"><div class="draft-rank">${esc(p.yahoo_rank??'—')}</div><span class="pos ${po}">${po}</span><div class="draft-player-main"><div class="draft-name">${esc(p.yahoo_name||p.display_name)}</div><div class="draft-meta"><span class="team-badge">${esc(p.team||'FA')}</span> · Yahoo #${esc(p.yahoo_rank??'—')}</div>${ts.length?`<div class="tags">${ts.slice(0,5).map(t=>`<span class="tag ${tagClass(t)}">${esc(t)}</span>`).join('')}</div>`:''}${context?`<div class="draft-intel">${esc(context)}</div>`:''}</div><button class="target-button draft-target ${p.user_target?'on':''}" data-key="${esc(p.player_key)}" data-target="${p.user_target?'false':'true'}">${p.user_target?'TARGETED':'TARGET'}</button></div>`;
+    return `<div class="draft-row ${po} ${p.user_target?'targeted':''}"><div class="draft-rank">${esc(p.yahoo_rank??'—')}</div><span class="pos ${po}">${po}</span><div class="draft-player-main"><div class="draft-name">${esc(p.yahoo_name||p.display_name)}</div><div class="draft-meta"><span class="team-badge">${esc(p.team||'FA')}</span> · Tier ${esc(p.tier??'—')} · Yahoo #${esc(p.yahoo_rank??'—')}</div>${ts.length?`<div class="tags">${ts.slice(0,5).map(t=>`<span class="tag ${tagClass(t)}">${esc(t)}</span>`).join('')}</div>`:''}${context?`<div class="draft-intel">${esc(context)}</div>`:''}</div><button class="target-button draft-target ${p.user_target?'on':''}" data-key="${esc(p.player_key)}" data-target="${p.user_target?'false':'true'}">${p.user_target?'TARGETED':'TARGET'}</button></div>`;
   }
 
   function renderWeather(){
