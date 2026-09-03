@@ -108,7 +108,8 @@
     const options=candidatesFor(round,slot);
     const rows=options.length?options.map(p=>{
       const star=p.source==='YOUR TARGET'?'★ ':'';
-      return `<div class="position-option"><div class="position-name">${star}${esc(p.name)}</div><div class="position-meta">${esc(p.rankLabel)}${p.rank} · ${esc(p.status)} · ${esc(p.group)} QB · ${esc(p.source)}</div></div>`;
+      const tier=Math.ceil(p.rank/12);
+      return `<div class="position-option"><div class="position-name">${star}${esc(p.name)}</div><div class="position-meta"><b>TIER ${tier}</b> · ${esc(p.rankLabel)}${p.rank} · ${esc(p.status)} · ${esc(p.group)} QB · ${esc(p.source)}</div></div>`;
     }).join(''):'<div class="wait-text">No approved quarterback fits this window. Do not force one.</div>';
 
     box.innerHTML=`<div class="position-title"><b>QB</b><span>${esc(plan.mode)} · ${options.length} CHOICES</span></div>${rows}<div class="wait-text">${esc(plan.note)}</div>`;
