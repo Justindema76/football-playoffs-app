@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0b1020">
+  <title>2026 Realistic Draft Action Plan</title>
+  <link rel="stylesheet" href="strategy-realistic.css">
+</head>
+<body>
+  <main class="page-shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">2026 YAHOO · 12-TEAM HALF-PPR</p>
+        <h1>REALISTIC DRAFT ACTION PLAN</h1>
+        <p class="hero-copy">Built from your exact snake pick numbers and current Yahoo draft prices. No more pretending a player with a Round 4 market price will still be there in Round 6.</p>
+      </div>
+      <a class="back-link" href="index.html">← INTEL APP</a>
+    </header>
+
+    <section class="control-panel">
+      <div>
+        <span class="control-label">YOUR DRAFT SLOT</span>
+        <div id="slotTabs" class="slot-tabs" aria-label="Draft slot selector"></div>
+      </div>
+      <div class="control-actions">
+        <button id="resetGone" class="ghost-btn" type="button">Reset gone</button>
+        <button id="resetMine" class="ghost-btn" type="button">Reset my roster</button>
+      </div>
+    </section>
+
+    <section class="summary-grid">
+      <article class="summary-card primary-card">
+        <p class="eyebrow">YOUR BOARD</p>
+        <h2 id="slotHeading">Pick 9</h2>
+        <p id="slotSummary"></p>
+        <div id="pickPath" class="pick-path"></div>
+        <div class="my-roster-wrap"><span class="control-label">MY PICKS ON THIS BOARD</span><div id="myRoster" class="my-roster"></div></div>
+      </article>
+      <article class="summary-card rules-card">
+        <p class="eyebrow">THE RULE THAT FIXES THE OLD PAGE</p>
+        <h2>ADP decides availability. Strategy decides preference.</h2>
+        <ul>
+          <li><b>Expected:</b> Yahoo ADP is actually near your pick.</li>
+          <li><b>If they fall:</b> the player normally goes earlier. Never count on him.</li>
+          <li><b>Take now / reach:</b> he is later than your pick, but his ADP says he probably will not survive to your next turn.</li>
+        </ul>
+      </article>
+    </section>
+
+    <section class="market-section">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">QB + TE MARKET REALITY</p>
+          <h2>Know the price before the room forces your hand</h2>
+        </div>
+      </div>
+      <div id="marketStrip" class="market-strip"></div>
+    </section>
+
+    <section class="legend-bar" aria-label="Player availability legend">
+      <span class="pill expected">EXPECTED</span>
+      <span>ADP near your pick</span>
+      <span class="pill fall">IF THEY FALL</span>
+      <span>Normally gone already</span>
+      <span class="pill reach">TAKE NOW / REACH</span>
+      <span>Later ADP, but unlikely to get back to you</span>
+    </section>
+
+    <section id="rounds" class="rounds"></section>
+
+    <section class="source-note">
+      <h2>Data rules</h2>
+      <p><b>Market layer:</b> Yahoo 1QB half-PPR queue/ADP snapshot current September 4, 2026. <b>Strategy layer:</b> Boone-style roster construction: build RB/WR strength, respect RB cliffs, do not force QB/TE just because a round number says so, and keep DEF/K at the end.</p>
+      <p>This page is intentionally separate from the original study guide. Mark a player <b>Mine</b> or <b>Gone</b> to remove him from later recommendations on this page only; both states are saved in this browser.</p>
+      <p class="source-links"><a href="https://sports.yahoo.com/fantasy/article/fantasy-football-justin-boones-takeaways-from-the-yahoo-fantasy-expert-league-draft-161424586.html" target="_blank" rel="noopener">Justin Boone expert-draft takeaways</a> · <a href="https://ca.sports.yahoo.com/news/2026-fantasy-football-how-to-build-the-best-team-possible-on-yahoo-using-adp-vs-xrank-to-identify-positional-value-190143205.html" target="_blank" rel="noopener">Yahoo ADP vs XRank strategy</a></p>
+    </section>
+  </main>
+  <script src="strategy-realistic.js" defer></script>
+</body>
+</html>
