@@ -1,0 +1,48 @@
+:root{
+  color-scheme:dark;
+  --bg:#070c15;
+  --panel:#0f1827;
+  --panel2:#121e31;
+  --line:#26364d;
+  --text:#f5f7fb;
+  --muted:#9eabc0;
+  --accent:#58a6ff;
+  --real:#35c78e;
+  --fall:#f0b45b;
+  --reach:#b887ff;
+  --early:#ff7e8a;
+}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:radial-gradient(circle at top,#111b31 0,#070c15 45%,#05080e 100%);color:var(--text);font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+button,input{font:inherit}
+button{cursor:pointer}
+a{color:#9ac9ff}
+.builder-shell{width:min(1500px,calc(100% - 28px));margin:0 auto;padding:22px 0 60px}
+.hero{display:flex;justify-content:space-between;gap:24px;align-items:flex-start;padding:18px 2px 20px;border-bottom:1px solid var(--line)}
+.hero h1{margin:2px 0 12px;font-size:clamp(2rem,5vw,4rem);line-height:.98;letter-spacing:-.05em}
+.hero-copy{margin:0;max-width:900px;color:var(--muted);line-height:1.6}
+.hero-actions{display:flex;gap:8px;flex-wrap:wrap}
+.ghost-link,.ghost-button,.danger-button{border:1px solid var(--line);background:#0c1422;color:var(--text);border-radius:11px;padding:10px 12px;text-decoration:none;font-weight:800}
+.danger-button{border-color:#65313a;color:#ff9ca6}
+.eyebrow,.label{font-size:.72rem;letter-spacing:.15em;font-weight:900;color:#7e91b0;text-transform:uppercase}
+.controls{display:flex;justify-content:space-between;gap:18px;align-items:end;padding:18px 0}
+.slot-tabs{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
+.slot-tab{width:42px;height:42px;border-radius:10px;border:1px solid var(--line);background:#0d1625;color:#c8d2e1;font-weight:900}
+.slot-tab.active{background:var(--accent);border-color:transparent;color:#07111f}
+.control-buttons{display:flex;gap:8px;flex-wrap:wrap}
+.summary-card{display:grid;grid-template-columns:.7fr 1.3fr;gap:18px;background:linear-gradient(180deg,#121d30,#0d1524);border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:0 20px 50px rgba(0,0,0,.2)}
+.summary-card h2{margin:2px 0 8px}.summary-card p{color:var(--muted);line-height:1.55;margin-bottom:0}
+.pick-path{display:grid;grid-template-columns:repeat(8,minmax(72px,1fr));gap:8px}
+.pick-chip{background:#0b1320;border:1px solid var(--line);border-radius:11px;padding:9px;text-align:center}.pick-chip span{display:block;color:var(--muted);font-size:.68rem;font-weight:800}.pick-chip b{display:block;margin-top:3px}
+.legend{display:flex;align-items:center;flex-wrap:wrap;gap:8px 10px;margin:16px 0;padding:11px 13px;border:1px solid var(--line);border-radius:13px;background:#0b1320;color:var(--muted);font-size:.8rem}
+.status{display:inline-flex;align-items:center;border-radius:999px;padding:5px 8px;font-size:.65rem;font-weight:950;letter-spacing:.07em;color:#07111f;white-space:nowrap}.status.realistic{background:var(--real)}.status.faller{background:var(--fall)}.status.reach{background:var(--reach)}.status.early{background:var(--early)}
+.board-intro{padding:6px 2px 10px}.board-intro h2{margin:2px 0 8px}.board-intro p{color:var(--muted);line-height:1.55;max-width:950px}
+.rounds{display:grid;gap:14px}
+.round-card{border:1px solid var(--line);background:linear-gradient(180deg,#101a2b,#0b1320);border-radius:17px;overflow:visible;box-shadow:0 16px 38px rgba(0,0,0,.18)}
+.round-head{display:flex;justify-content:space-between;gap:16px;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line);background:#121e31;border-radius:17px 17px 0 0}.round-title b{display:block;font-size:1.02rem}.round-title span{display:block;color:var(--muted);font-size:.76rem;margin-top:3px}.round-picks{text-align:right;font-weight:900}.round-picks small{display:block;color:var(--muted);font-size:.7rem;margin-top:3px}
+.round-body{padding:14px}.market-note{font-size:.8rem;color:#9faec3;margin-bottom:11px}
+.picker{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin-bottom:12px}.player-search{width:100%;border:1px solid #34465f;background:#0a1220;color:white;border-radius:10px;padding:10px 11px;outline:none}.player-search:focus{border-color:#5b9de4;box-shadow:0 0 0 3px rgba(88,166,255,.12)}.add-button{border:1px solid #2d6d57;background:#123126;color:#8ee4bd;border-radius:10px;padding:0 14px;font-weight:900}
+.suggestions{display:none;position:absolute;left:0;right:84px;top:46px;z-index:20;max-height:290px;overflow:auto;border:1px solid #36506f;background:#0d1727;border-radius:12px;box-shadow:0 16px 35px rgba(0,0,0,.35)}.suggestions.open{display:block}.suggestion{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:10px 11px;border-bottom:1px solid #26364d;cursor:pointer}.suggestion:last-child{border-bottom:0}.suggestion:hover{background:#15243a}.suggestion-name{font-weight:850}.suggestion-meta{font-size:.72rem;color:var(--muted);margin-top:2px}.suggestion-adp{font-size:.75rem;font-weight:900;color:#d8e2ef}
+.targets{display:grid;gap:8px}.empty{color:#70819d;font-size:.82rem;padding:7px 2px}.target-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto auto auto;gap:8px;align-items:center;border:1px solid #26384f;background:#111c2d;border-radius:11px;padding:9px}.target-order{font-weight:950;color:#7f92ae;width:24px;text-align:center}.target-name{font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.target-meta{color:var(--muted);font-size:.72rem;margin-top:2px}.target-adp{font-weight:900;font-size:.77rem;white-space:nowrap}.move-button,.remove-button{border:1px solid #3a4d69;background:#0b1422;color:#b9c5d7;border-radius:8px;padding:5px 8px;font-weight:900}.remove-button{border-color:#5c3038;color:#ff9ba5}
+@media(max-width:950px){.summary-card{grid-template-columns:1fr}.pick-path{grid-template-columns:repeat(5,minmax(70px,1fr))}}
+@media(max-width:680px){.builder-shell{width:calc(100% - 18px);padding-top:10px}.hero,.controls{display:block}.hero-actions,.control-buttons{margin-top:12px}.slot-tab{width:39px;height:39px}.pick-path{grid-template-columns:repeat(3,1fr)}.round-head{align-items:flex-start}.target-row{grid-template-columns:auto minmax(0,1fr) auto}.target-adp{grid-column:2}.move-button,.remove-button{width:36px}.status{font-size:.6rem}.suggestions{right:0}.picker{grid-template-columns:1fr}.add-button{height:40px}}
