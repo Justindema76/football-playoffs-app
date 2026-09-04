@@ -20,6 +20,7 @@
 
     const backs=allBacks
       .filter(player=>playersApi.matches(player,state,intelApi))
+      .filter(player=>state.pos!=='COWBELL'||playersApi.allTags(player).includes('COWBELL'))
       .filter(player=>selectedTeam==='ALL'||String(player.team||'FA').toUpperCase()===selectedTeam);
     const groups=playersApi.groupByTeam(backs);
 
