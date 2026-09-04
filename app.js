@@ -8,6 +8,7 @@
   const TIER_COUNT=15;
   const FILTERS=['ALL','QB','RB','WR','TE','DEF','K','STARRED','INTEL','INJURY'];
   const POSITION_PANEL_FILTERS=['ALL','STARRED','INTEL','INJURY'];
+  const RB_PANEL_FILTERS=['ALL','STARRED','COWBELL','INTEL','INJURY'];
   const FILTER_VIEWS=new Set(['players','draft','intel','runningbacks','widereceivers','injuries']);
   const state={view:'draft',pos:'ALL',q:'',players:[],intel:[],weather:[],owner:[],suggestions:[],errors:[]};
   const $=id=>document.getElementById(id);
@@ -77,8 +78,7 @@
   }
 
   function renderFilters(){
-    const isPositionPanel=state.view==='runningbacks'||state.view==='widereceivers';
-    const a=isPositionPanel?POSITION_PANEL_FILTERS:(FILTER_VIEWS.has(state.view)?FILTERS:['ALL']);
+    const a=state.view==='runningbacks'?RB_PANEL_FILTERS:state.view==='widereceivers'?POSITION_PANEL_FILTERS:(FILTER_VIEWS.has(state.view)?FILTERS:['ALL']);
     $('positionFilters').innerHTML=a.map(p=>`<button class="${state.pos===p?'active':''}" data-pos="${p}">${p}</button>`).join('');
     $('positionFilters').querySelectorAll('button').forEach(b=>b.onclick=()=>{state.pos=b.dataset.pos;renderFilters();renderView()});
   }
