@@ -137,13 +137,11 @@
     const all=state.players.slice().sort(playersApi.sortYahoo);
     const shown=all.filter(matches);
     const targeted=all.filter(p=>p.user_target).length;
-    const gaps=playersApi.catalogGaps(all);
     $('pageMeta').textContent=`${shown.length} Yahoo players shown · ${targeted} starred · 15 rounds · 12 picks per round`;
     if(!all.length){$('content').innerHTML='<div class="empty">No Yahoo players synced yet.</div>';return}
     const tiers=Array.from({length:TIER_COUNT},(_,i)=>shown.filter(p=>p.tier===i+1));
     const late=shown.filter(p=>!p.tier||p.tier>TIER_COUNT);
-    const warning=gaps.length?`<div class="catalog-error catalog-warning"><b>YAHOO RANK VERIFICATION IN PROGRESS</b><span>Draft remains available. Unverified/missing Yahoo rank${gaps.length===1?'':'s'}: ${gaps.slice(0,12).map(r=>`#${r}`).join(', ')}${gaps.length>12?'…':''}. Verified players keep their Yahoo Pre-Season rank and tier.</span></div>`:'';
-    $('content').innerHTML=`${warning}<div class="draft-summary"><div><span>YAHOO PLAYERS</span><b>${all.length}</b></div><div><span>STARRED</span><b>${targeted}</b></div><div><span>ROUNDS</span><b>${TIER_COUNT}</b></div><div><span>ORDER</span><b>YAHOO PRE-SEASON</b></div></div><div class="tier-grid">${tiers.map((g,i)=>tier(i+1,g)).join('')}</div>${late.length?`<section class="late-pool"><div class="late-pool-head"><b>UNRANKED / LATE POOL</b><span>${late.length} players</span></div><div class="late-grid">${late.map(draftRow).join('')}</div></section>`:''}`;
+    $('content').innerHTML=`<div class="draft-summary"><div><span>YAHOO PLAYERS</span><b>${all.length}</b></div><div><span>STARRED</span><b>${targeted}</b></div><div><span>ROUNDS</span><b>${TIER_COUNT}</b></div><div><span>ORDER</span><b>YAHOO PRE-SEASON</b></div></div><div class="tier-grid">${tiers.map((g,i)=>tier(i+1,g)).join('')}</div>${late.length?`<section class="late-pool"><div class="late-pool-head"><b>UNRANKED / LATE POOL</b><span>${late.length} players</span></div><div class="late-grid">${late.map(draftRow).join('')}</div></section>`:''}`;
     bindTargets();
   }
 
