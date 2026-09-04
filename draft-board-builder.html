@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0b1020">
+  <title>2026 Personal Draft Board Builder</title>
+  <link rel="stylesheet" href="draft-board-builder.css">
+</head>
+<body>
+  <main class="builder-shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">2026 YAHOO · 12-TEAM HALF-PPR</p>
+        <h1>PERSONAL DRAFT BOARD BUILDER</h1>
+        <p class="hero-copy">You choose the players. The app only tells you whether each name is realistic at your exact snake pick, a reach, or a player who would have to fall.</p>
+      </div>
+      <div class="hero-actions">
+        <a class="ghost-link" href="index.html">← Intel App</a>
+        <a class="ghost-link" href="strategy-realistic.html">Realistic Guide</a>
+      </div>
+    </header>
+
+    <section class="controls">
+      <div>
+        <span class="label">YOUR DRAFT SLOT</span>
+        <div id="slotTabs" class="slot-tabs"></div>
+      </div>
+      <div class="control-buttons">
+        <button id="copyBoard" type="button" class="ghost-button">Copy Board</button>
+        <button id="clearSlot" type="button" class="danger-button">Clear This Slot</button>
+      </div>
+    </section>
+
+    <section class="summary-card">
+      <div>
+        <p class="eyebrow">YOUR PICK PATH</p>
+        <h2 id="slotTitle">Pick 9</h2>
+        <p id="slotText"></p>
+      </div>
+      <div id="pickPath" class="pick-path"></div>
+    </section>
+
+    <section class="legend">
+      <span class="status realistic">REALISTIC</span><span>Yahoo ADP is near your pick.</span>
+      <span class="status faller">IF HE FALLS</span><span>Normally drafted before your pick.</span>
+      <span class="status reach">REACH</span><span>Later ADP, but could be worth taking before your next turn.</span>
+      <span class="status early">WAY EARLY</span><span>His market price is much later than this pick.</span>
+    </section>
+
+    <section class="board-intro">
+      <p class="eyebrow">BUILD YOUR BOARD</p>
+      <h2>Pick your own names for every round</h2>
+      <p>Search any player, add as many names as you want, then move them up or down in your preferred order. Each draft slot saves its own board in this browser.</p>
+    </section>
+
+    <section id="rounds" class="rounds"></section>
+  </main>
+  <script src="draft-board-builder.js" defer></script>
+</body>
+</html>
