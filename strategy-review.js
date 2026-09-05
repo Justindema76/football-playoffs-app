@@ -13,7 +13,7 @@
   function snakePick(s,r){return r%2?((r-1)*TEAM_COUNT+s):(r*TEAM_COUNT-s+1)}
   function nextPick(s,r){return r<MAX_ROUNDS?snakePick(s,r+1):181}
   function rowKey(r){return `${slot}-${r}`}
-  function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]))}
+  function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
   function eligible(p,r){if(r<=13&&['DEF','K'].includes(p.pos))return false;if(r===14&&p.pos==='K')return false;return true}
   function score(p,pick){return Math.abs(p.market-pick)-(p.target?2.5:0)-p.expert*.8}
   function uniqueTop(pool,limit,sorter){return [...pool].sort(sorter).slice(0,limit)}
