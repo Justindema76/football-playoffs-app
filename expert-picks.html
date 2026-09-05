@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en" class="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#f5f7fb">
+  <title>2026 Expert Picks</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="mobile-nav.css">
+  <link rel="stylesheet" href="expert-picks.css">
+</head>
+<body>
+  <div class="expert-shell">
+    <header class="app-header expert-header">
+      <div class="header-main">
+        <div class="brand-wrap"><h1>2026 Fantasy Intel</h1><p>Yahoo expert draft board</p></div>
+        <div class="header-actions">
+          <button class="ghost-btn" type="button" onclick="location.href='index.html'">INTEL APP</button>
+          <button class="ghost-btn" type="button" onclick="location.href='strategy.html'">STUDY</button>
+          <button class="ghost-btn" type="button" onclick="location.href='action-plan.html'">ACTION PLAN</button>
+        </div>
+      </div>
+    </header>
+
+    <section class="expert-intro">
+      <div>
+        <h1>EXPERT PICKS</h1>
+        <p>12-team expert draft · 15 rounds · exact pick slots from the board you supplied.</p>
+      </div>
+      <div class="expert-note"><b>BOONE IS HIGHLIGHTED.</b> Use this page to see what each expert actually drafted by round without mixing those picks into your Yahoo tiers.</div>
+    </section>
+
+    <nav id="expertJump" class="expert-jump" aria-label="Jump to expert"></nav>
+    <main id="expertBoard" class="expert-board"></main>
+    <p class="expert-footer">Source: the expert draft board image you supplied. Pick labels are draft slots (for example 3.03), not Yahoo ranking numbers.</p>
+  </div>
+  <script src="expert-picks.js" defer></script>
+  <script src="mobile-nav.js" defer></script>
+</body>
+</html>
