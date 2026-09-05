@@ -4,17 +4,16 @@
   const players = raw.map(([name,pos,team,code,market,target,expert])=>({name,pos,team,code,market,target:!!target,expert:Number(expert)||0}));
   const $ = id => document.getElementById(id);
   const STORE = 'strategy-approval-review-v1';
-  const SLOT_STORE = 'strategy-approval-review-slot-v1';
   const TEAM_COUNT = 12;
   const MAX_ROUNDS = 15;
-  let slot = Math.max(1,Math.min(12,Number(localStorage.getItem(SLOT_STORE))||9));
+  let slot = 1;
   let review = loadReview();
   function loadReview(){try{return JSON.parse(localStorage.getItem(STORE)||'{}')||{}}catch{return {}}}
   function saveReview(){localStorage.setItem(STORE,JSON.stringify(review))}
   function snakePick(s,r){return r%2?((r-1)*TEAM_COUNT+s):(r*TEAM_COUNT-s+1)}
   function nextPick(s,r){return r<MAX_ROUNDS?snakePick(s,r+1):181}
   function rowKey(r){return `${slot}-${r}`}
-  function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+  function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]))}
   function eligible(p,r){if(r<=13&&['DEF','K'].includes(p.pos))return false;if(r===14&&p.pos==='K')return false;return true}
   function score(p,pick){return Math.abs(p.market-pick)-(p.target?2.5:0)-p.expert*.8}
   function uniqueTop(pool,limit,sorter){return [...pool].sort(sorter).slice(0,limit)}
@@ -36,7 +35,7 @@
   function card(row){const k=rowKey(row.round),rv=review[k]||{},next=row.nextPick?`NEXT PICK #${row.nextPick}`:'FINAL PICK',flagged=rv.status==='rework';return `<article class="round-card ${flagged?'flagged':''}"><div class="round-head"><div class="round-badge">ROUND ${row.round}</div><div><b>MAIN PLAYER NUMBER WINDOW ${row.window}</b><div class="wait-note">${row.nextPick?`${row.between} players disappear before you pick again.`:'Final selection.'}</div></div><div class="pick-info">YOUR PICK #${row.pick}<small>${next}</small></div></div><div class="round-body"><div class="choice-grid"><section class="choice-box"><h3><span class="pill realistic">REALISTIC</span></h3><div class="player-list">${items(row.realistic)}</div></section><section class="choice-box"><h3><span class="pill faller">IF THEY FALL</span></h3><div class="player-list">${items(row.fallers)}</div></section><section class="choice-box"><h3><span class="pill take">TAKE NOW</span></h3><div class="player-list">${items(row.takeNow)}</div></section></div><div class="review-row"><button type="button" class="review-btn approve ${rv.status==='approve'?'active':''}" data-review="approve" data-key="${k}">APPROVE</button><button type="button" class="review-btn rework ${rv.status==='rework'?'active':''}" data-review="rework" data-key="${k}">REWORK</button><input class="review-note" data-note="${k}" value="${esc(rv.note||'')}" placeholder="Your note: remove a name, move someone earlier/later, add someone…"></div></div></article>`}
   function renderRounds(){const issues=$('issuesOnly').checked;let sr=currentRows();if(issues)sr=sr.filter(r=>review[rowKey(r.round)]?.status==='rework');$('rounds').innerHTML=sr.length?sr.map(card).join(''):'<div class="empty">No rows flagged for rework in this draft slot.</div>'}
   function renderAll(){renderTabs();renderSummary();renderStats();renderRounds()}
-  document.addEventListener('click',e=>{const s=e.target.closest('[data-slot]');if(s){slot=Number(s.dataset.slot);localStorage.setItem(SLOT_STORE,String(slot));renderAll();return}const b=e.target.closest('[data-review]');if(b){const k=b.dataset.key;review[k]=review[k]||{};review[k].status=review[k].status===b.dataset.review?'':b.dataset.review;saveReview();renderStats();renderRounds();}})
+  document.addEventListener('click',e=>{const s=e.target.closest('[data-slot]');if(s){slot=Number(s.dataset.slot);renderAll();return}const b=e.target.closest('[data-review]');if(b){const k=b.dataset.key;review[k]=review[k]||{};review[k].status=review[k].status===b.dataset.review?'':b.dataset.review;saveReview();renderStats();renderRounds();}})
   document.addEventListener('input',e=>{const n=e.target.closest('[data-note]');if(!n)return;review[n.dataset.note]=review[n.dataset.note]||{};review[n.dataset.note].note=n.value;saveReview()})
   $('issuesOnly').addEventListener('change',renderRounds);
   $('clearReviews').addEventListener('click',()=>{if(!confirm(`Clear approval/rework marks and notes for draft slot ${slot}?`))return;for(let r=1;r<=15;r++)delete review[rowKey(r)];saveReview();renderAll()});
