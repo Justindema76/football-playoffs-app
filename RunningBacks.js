@@ -2,6 +2,7 @@
   'use strict';
 
   let selectedTeam='ALL';
+  let selectedRole='ALL';
 
   function roleLabel(player,playersApi){
     const tags=playersApi.allTags(player);
@@ -21,14 +22,17 @@
     const backs=allBacks
       .filter(player=>playersApi.matches(player,state,intelApi))
       .filter(player=>state.pos!=='COWBELL'||playersApi.allTags(player).includes('COWBELL'))
+      .filter(player=>selectedRole==='ALL'||playersApi.allTags(player).includes(selectedRole))
       .filter(player=>selectedTeam==='ALL'||String(player.team||'FA').toUpperCase()===selectedTeam);
     const groups=playersApi.groupByTeam(backs);
 
-    $('pageMeta').textContent=`${backs.length} running backs · ${selectedTeam==='ALL'?groups.size+' teams':selectedTeam}`;
+    const viewLabel=selectedRole==='HANDCUFF'?'handcuffs':'running backs';
+    $('pageMeta').textContent=`${backs.length} ${viewLabel} · ${selectedTeam==='ALL'?groups.size+' teams':selectedTeam}`;
     $('content').innerHTML=`
       <div class="position-toolbar">
+        <label class="team-filter-label"><span>RB SORT</span><select id="rbRoleFilter" class="team-filter"><option value="ALL" ${selectedRole==='ALL'?'selected':''}>ALL RUNNING BACKS</option><option value="HANDCUFF" ${selectedRole==='HANDCUFF'?'selected':''}>HANDCUFFS</option></select></label>
         <label class="team-filter-label"><span>TEAM</span><select id="rbTeamFilter" class="team-filter"><option value="ALL">ALL TEAMS</option>${teamOptions.map(team=>`<option value="${esc(team)}" ${selectedTeam===team?'selected':''}>${esc(team)}</option>`).join('')}</select></label>
-        <span class="position-toolbar-note">Same canonical players · RB view</span>
+        <span class="position-toolbar-note">${selectedRole==='HANDCUFF'?'Live HANDCUFF intel tags · updates automatically':'Same canonical players · RB view'}</span>
       </div>
       <div class="position-board">${[...groups.entries()].map(([team,players])=>`
         <section class="position-team-section">
@@ -47,6 +51,8 @@
           }).join('')}</div>
         </section>`).join('')||'<div class="empty">No running backs match.</div>'}</div>`;
 
+    const roleFilter=$('rbRoleFilter');
+    if(roleFilter)roleFilter.onchange=e=>{selectedRole=e.target.value;render(ctx)};
     const teamFilter=$('rbTeamFilter');
     if(teamFilter)teamFilter.onchange=e=>{selectedTeam=e.target.value;render(ctx)};
     bindTargets();
