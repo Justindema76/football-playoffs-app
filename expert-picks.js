@@ -1,6 +1,11 @@
 (() => {
   'use strict';
 
+  const SB='https://bbodmhffnqebhfksjier.supabase.co';
+  const KEY='sb_publishable_L048cgw2gZwCeWmSWpUclA_cuKCSyQn';
+  const H={apikey:KEY,Authorization:`Bearer ${KEY}`,'Content-Type':'application/json'};
+  const playerApi=window.FantasyPlayers;
+
   const EXPERTS = [
     {name:'SMYTH', picks:[
       ['1.01','Jahmyr Gibbs'],['2.12','Nico Collins'],['3.01','Malik Nabers'],['4.12','Cam Skattebo'],['5.01','Bucky Irving'],['6.12','Harold Fannin Jr.'],['7.01','Marvin Harrison Jr.'],['8.12','Caleb Williams'],['9.01','KC Concepcion'],['10.12','Jalen Coker'],['11.01','Jakobi Meyers'],['12.12','Brandon Aubrey'],['13.01','Houston Texans'],['14.12','Kyler Murray'],['15.01','Ray Davis']
@@ -43,10 +48,79 @@
   const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const board=document.getElementById('expertBoard');
   const nav=document.getElementById('expertJump');
+  const status=document.getElementById('expertDataStatus');
 
-  nav.innerHTML=EXPERTS.map(e=>`<a href="#expert-${e.name.toLowerCase()}" class="${e.highlight?'boone':''}">${esc(e.name)}</a>`).join('');
-  board.innerHTML=EXPERTS.map(expert=>`<article class="expert-card ${expert.highlight?'boone-card':''}" id="expert-${expert.name.toLowerCase()}">
-    <header><div><span>EXPERT</span><h2>${esc(expert.name)}</h2></div>${expert.highlight?'<b class="boone-badge">FOCUS</b>':''}</header>
-    <div class="expert-pick-list">${expert.picks.map(([pick,player])=>`<div class="expert-pick"><b>${esc(pick)}</b><span>${esc(player)}</span></div>`).join('')}</div>
-  </article>`).join('');
+  if(!playerApi){
+    board.innerHTML='<div class="expert-load-error">Shared Players.js did not load.</div>';
+    if(status)status.textContent='CANONICAL PLAYER DATA ERROR';
+    return;
+  }
+
+  function canonicalMaps(rows){
+    const exact=new Map();
+    const defenses=[];
+    (rows||[]).forEach(player=>{
+      [player.player_key,player.yahoo_name,player.display_name].filter(Boolean).forEach(value=>{
+        const key=playerApi.normName(value);
+        if(key&&!exact.has(key))exact.set(key,player);
+      });
+      if(String(player.position||'').toUpperCase()==='DEF')defenses.push(player);
+    });
+    return {exact,defenses};
+  }
+
+  function resolvePlayer(name,maps){
+    const key=playerApi.normName(name);
+    if(maps.exact.has(key))return maps.exact.get(key);
+
+    // Team defenses on the source board use city + mascot while the canonical
+    // catalog uses the mascot name. Resolve them from canonical DEF rows only.
+    return maps.defenses.find(player=>{
+      const defenseName=playerApi.normName(player.yahoo_name||player.display_name);
+      return defenseName&&(key===defenseName||key.endsWith(` ${defenseName}`));
+    })||null;
+  }
+
+  function pickMarkup(pick,name,maps){
+    const player=resolvePlayer(name,maps);
+    const position=String(player?.position||'').toUpperCase();
+    const team=String(player?.team||'').toUpperCase();
+    const posClass=['QB','RB','WR','TE','DEF','K'].includes(position)?position:'X';
+    return `<div class="expert-pick pos-${posClass}" data-pos="${posClass}">
+      <b>${esc(pick)}</b>
+      <div class="expert-player">
+        <span class="expert-player-name">${esc(name)}</span>
+        <div class="expert-player-meta">
+          <span class="pos ${posClass}">${esc(position||'—')}</span>
+          <strong>${esc(team||'—')}</strong>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function render(maps){
+    nav.innerHTML=EXPERTS.map(e=>`<a href="#expert-${e.name.toLowerCase()}" class="${e.highlight?'boone':''}">${esc(e.name)}</a>`).join('');
+    board.innerHTML=EXPERTS.map(expert=>`<article class="expert-card ${expert.highlight?'boone-card':''}" id="expert-${expert.name.toLowerCase()}">
+      <header><div><span>EXPERT</span><h2>${esc(expert.name)}</h2></div>${expert.highlight?'<b class="boone-badge">FOCUS</b>':''}</header>
+      <div class="expert-pick-list">${expert.picks.map(([pick,name])=>pickMarkup(pick,name,maps)).join('')}</div>
+    </article>`).join('');
+  }
+
+  async function load(){
+    nav.innerHTML=EXPERTS.map(e=>`<a href="#expert-${e.name.toLowerCase()}" class="${e.highlight?'boone':''}">${esc(e.name)}</a>`).join('');
+    board.innerHTML='<div class="expert-loading">Loading teams and positions from the canonical player database…</div>';
+    try{
+      const response=await fetch(`${SB}/rest/v1/draft_player_catalog?select=player_key,yahoo_name,display_name,team,position,active&active=eq.true&order=yahoo_name.asc`,{headers:H});
+      if(!response.ok)throw Error(await response.text()||String(response.status));
+      const catalog=await response.json();
+      render(canonicalMaps(catalog));
+      if(status)status.textContent=`${catalog.length} CANONICAL PLAYERS · TEAM + POSITION LIVE FROM DATABASE`;
+    }catch(error){
+      console.error('Expert picks canonical player load failed',error);
+      render(canonicalMaps([]));
+      if(status)status.textContent='CANONICAL PLAYER DATA COULD NOT LOAD';
+    }
+  }
+
+  load();
 })();
