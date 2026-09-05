@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0b1020">
+  <title>2026 Draft Strategy Approval Review</title>
+  <link rel="stylesheet" href="strategy-review.css">
+</head>
+<body>
+  <main class="page-shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">SEPARATE REVIEW PAGE · DOES NOT CHANGE /STRATEGY</p>
+        <h1>2026 DRAFT STRATEGY APPROVAL BOARD</h1>
+        <p class="hero-copy">Review the player names attached to every exact snake pick before anything is moved into the current Draft Strategy page. Player choices include NFL team, position and market number.</p>
+      </div>
+      <a class="back-link" href="strategy.html">Open current strategy ↗</a>
+    </header>
+
+    <section class="controls">
+      <div>
+        <span class="label">DRAFT SLOT</span>
+        <div id="slotTabs" class="slot-tabs"></div>
+      </div>
+      <div class="control-actions">
+        <label class="toggle"><input id="issuesOnly" type="checkbox"> Show only rows I flagged</label>
+        <button id="clearReviews" class="ghost-btn" type="button">Clear review marks</button>
+      </div>
+    </section>
+
+    <section class="summary-grid">
+      <article class="summary-card">
+        <p class="eyebrow">YOUR FIXED SNAKE PATH</p>
+        <h2 id="slotTitle">Draft Slot 9</h2>
+        <p id="slotSummary"></p>
+        <div id="pickPath" class="pick-path"></div>
+      </article>
+      <article class="summary-card compact">
+        <p class="eyebrow">HOW TO READ IT</p>
+        <div class="legend-row"><span class="pill realistic">REALISTIC</span><span>Near this exact pick.</span></div>
+        <div class="legend-row"><span class="pill faller">IF THEY FALL</span><span>Normally gone earlier.</span></div>
+        <div class="legend-row"><span class="pill take">TAKE NOW</span><span>Likely gone before your next pick.</span></div>
+      </article>
+    </section>
+
+    <section id="reviewStats" class="review-stats"></section>
+    <section id="rounds" class="rounds"></section>
+
+    <footer class="footer-note">
+      <b>Important:</b> this page is review-only. It stores your approval/rework notes in this browser and does not write back to the current strategy page.
+    </footer>
+  </main>
+  <script src="strategy-review-data.js" defer></script>
+  <script src="strategy-review.js" defer></script>
+</body>
+</html>
