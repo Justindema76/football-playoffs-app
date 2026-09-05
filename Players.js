@@ -43,7 +43,7 @@
       const playerSuggestions=(suggestionsByKey.get(key)||suggestionsByKey.get(name)||[]).slice();
       return Object.freeze({
         ...raw,
-        player_key:key||raw.player_key,
+        player_key:raw.player_key||key,
         tier:tierFor(raw),
         user_target:!!target.user_target,
         user_tags:target.user_tags||[],
