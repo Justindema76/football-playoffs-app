@@ -15,6 +15,7 @@
   const onIndex = path.endsWith('/') || path.endsWith('/index.html');
   const onStudy = path.endsWith('/strategy.html');
   const onLive = path.endsWith('/live.html');
+  const onExpert = path.endsWith('/expert-picks.html');
 
   function appHref(view){
     return onIndex ? `#${view}` : `index.html#${view}`;
@@ -67,7 +68,8 @@
       ${APP_VIEWS.map(([view,label])=>`<a href="${appHref(view)}" data-mobile-view="${view}" class="${onIndex&&activeHash===view?'active':''}">${label}</a>`).join('')}
       <div class="mobile-menu-separator"></div>
       <a href="strategy.html" class="study ${onStudy?'active':''}">STUDY GUIDE</a>
-      <a href="live.html" class="live ${onLive?'active':''}">LIVE VIEWER</a>`;
+      <a href="expert-picks.html" class="study ${onExpert?'active':''}">EXPERT PICKS</a>
+      ${onExpert?'':`<a href="live.html" class="live ${onLive?'active':''}">LIVE VIEWER</a>`}`;
 
     document.body.append(shade,panel,toggle);
 
