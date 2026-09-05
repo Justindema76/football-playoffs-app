@@ -26,14 +26,16 @@
       <div>
         <h1>EXPERT PICKS</h1>
         <p>12-team expert draft · 15 rounds · exact pick slots from the board you supplied.</p>
+        <div id="expertDataStatus" class="expert-data-status">LOADING CANONICAL PLAYER DATA…</div>
       </div>
-      <div class="expert-note"><b>BOONE IS HIGHLIGHTED.</b> Use this page to see what each expert actually drafted by round without mixing those picks into your Yahoo tiers.</div>
+      <div class="expert-note"><b>NO DUPLICATE PLAYER DATA.</b> The board stores only expert + pick + player name. Team and position are loaded from the same canonical player database used by the rest of the app. Boone is highlighted.</div>
     </section>
 
     <nav id="expertJump" class="expert-jump" aria-label="Jump to expert"></nav>
     <main id="expertBoard" class="expert-board"></main>
-    <p class="expert-footer">Source: the expert draft board image you supplied. Pick labels are draft slots (for example 3.03), not Yahoo ranking numbers.</p>
+    <p class="expert-footer">Source: the expert draft board image you supplied. Pick labels are draft slots (for example 3.03), not Yahoo ranking numbers. Team and position come from the shared canonical catalog.</p>
   </div>
+  <script src="Players.js" defer></script>
   <script src="expert-picks.js" defer></script>
   <script src="mobile-nav.js" defer></script>
 </body>
