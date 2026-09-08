@@ -21,18 +21,19 @@
 
     const backs=allBacks
       .filter(player=>playersApi.matches(player,state,intelApi))
-      .filter(player=>state.pos!=='COWBELL'||playersApi.allTags(player).includes('COWBELL'))
+      .filter(player=>!['COWBELL','HANDCUFF'].includes(state.pos)||playersApi.allTags(player).includes(state.pos))
       .filter(player=>selectedRole==='ALL'||playersApi.allTags(player).includes(selectedRole))
       .filter(player=>selectedTeam==='ALL'||String(player.team||'FA').toUpperCase()===selectedTeam);
     const groups=playersApi.groupByTeam(backs);
 
-    const viewLabel=selectedRole==='HANDCUFF'?'handcuffs':'running backs';
+    const activeRole=state.pos==='HANDCUFF'?'HANDCUFF':selectedRole;
+    const viewLabel=activeRole==='HANDCUFF'?'handcuffs':'running backs';
     $('pageMeta').textContent=`${backs.length} ${viewLabel} · ${selectedTeam==='ALL'?groups.size+' teams':selectedTeam}`;
     $('content').innerHTML=`
       <div class="position-toolbar">
         <label class="team-filter-label"><span>RB SORT</span><select id="rbRoleFilter" class="team-filter"><option value="ALL" ${selectedRole==='ALL'?'selected':''}>ALL RUNNING BACKS</option><option value="HANDCUFF" ${selectedRole==='HANDCUFF'?'selected':''}>HANDCUFFS</option></select></label>
         <label class="team-filter-label"><span>TEAM</span><select id="rbTeamFilter" class="team-filter"><option value="ALL">ALL TEAMS</option>${teamOptions.map(team=>`<option value="${esc(team)}" ${selectedTeam===team?'selected':''}>${esc(team)}</option>`).join('')}</select></label>
-        <span class="position-toolbar-note">${selectedRole==='HANDCUFF'?'Live HANDCUFF intel tags · updates automatically':'Same canonical players · RB view'}</span>
+        <span class="position-toolbar-note">${activeRole==='HANDCUFF'?'Live HANDCUFF intel tags · updates automatically':'Current season RB roles + intel'}</span>
       </div>
       <div class="position-board">${[...groups.entries()].map(([team,players])=>`
         <section class="position-team-section">
@@ -42,7 +43,7 @@
             const tags=playersApi.allTags(player);
             const context=player.planner_reason||latest.recommendation||latest.what_changed||'No material role change currently logged.';
             return `<article class="player-card position-card ${player.user_target?'targeted':''}">
-              <div class="card-top"><div class="position-role-wrap"><span class="pos RB">RB</span><span class="position-role rb-role">${esc(roleLabel(player,playersApi))}</span></div><div class="position-actions"><span class="tier-badge">TIER ${esc(player.tier??'—')}</span><span class="rank">Yahoo #${esc(player.yahoo_rank??'—')}</span><button class="target-button ${player.user_target?'on':''}" data-key="${esc(player.player_key)}" data-target="${player.user_target?'false':'true'}">${player.user_target?'TARGETED':'TARGET'}</button></div></div>
+              <div class="card-top"><div class="position-role-wrap"><span class="pos RB">RB</span><span class="position-role rb-role">${esc(roleLabel(player,playersApi))}</span></div><div class="position-actions"><button class="target-button ${player.user_target?'on':''}" data-key="${esc(player.player_key)}" data-target="${player.user_target?'false':'true'}">${player.user_target?'TARGETED':'TARGET'}</button></div></div>
               <div class="position-name-line"><div class="player-name">${esc(player.yahoo_name||player.display_name)}</div><span class="team-badge">${esc(team)}</span></div>
               ${tags.length?`<div class="tags">${tags.map(tag=>`<span class="tag ${tagClass(tag)}">${esc(tag)}</span>`).join('')}</div>`:''}
               <div class="player-context position-current-read"><b>CURRENT READ:</b> ${esc(context)}</div>
@@ -52,7 +53,7 @@
         </section>`).join('')||'<div class="empty">No running backs match.</div>'}</div>`;
 
     const roleFilter=$('rbRoleFilter');
-    if(roleFilter)roleFilter.onchange=e=>{selectedRole=e.target.value;render(ctx)};
+    if(roleFilter)roleFilter.onchange=e=>{selectedRole=e.target.value;state.pos='ALL';render(ctx)};
     const teamFilter=$('rbTeamFilter');
     if(teamFilter)teamFilter.onchange=e=>{selectedTeam=e.target.value;render(ctx)};
     bindTargets();
