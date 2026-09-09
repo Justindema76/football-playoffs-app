@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Fantasy Football 2026 Live Sync",
-  "version": "1.0.8",
-  "description": "Reads Yahoo draft picks without taking over Queue, syncs drafted players, and publishes your draft slot.",
+  "name": "Fantasy Intel Yahoo League Sync",
+  "version": "2.0.0",
+  "description": "Syncs Battle of the Kings Yahoo fantasy teams and rosters into Fantasy Intel.",
   "permissions": ["storage", "activeTab"],
   "host_permissions": [
     "https://football.fantasysports.yahoo.com/*",
@@ -16,7 +16,7 @@
     }
   ],
   "action": {
-    "default_title": "Fantasy Live Sync",
+    "default_title": "Fantasy Intel Yahoo Sync",
     "default_popup": "popup.html"
   }
 }
