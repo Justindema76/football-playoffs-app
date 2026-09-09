@@ -1,32 +1,53 @@
-const LIVE_URL='https://2026-fantasy-football.vercel.app/live';
-const $=id=>document.getElementById(id);
+const SITE_URL='https://2026-fantasy-football.vercel.app/league';
+const syncButton=document.getElementById('syncButton');
+const openButton=document.getElementById('openButton');
+const status=document.getElementById('status');
+const statusTitle=document.getElementById('statusTitle');
+const statusText=document.getElementById('statusText');
+const stats=document.getElementById('stats');
+
+function setStatus(title,text,type=''){
+  status.className=`status ${type}`.trim();
+  statusTitle.textContent=title;
+  statusText.textContent=text;
+}
+function showStats(r){
+  if(!r)return;
+  stats.hidden=false;
+  document.getElementById('teamsCount').textContent=r.teams||0;
+  document.getElementById('playersCount').textContent=r.players||0;
+  document.getElementById('matchedCount').textContent=r.matched||0;
+  document.getElementById('unmatchedCount').textContent=r.unmatched||0;
+}
 async function activeTab(){const [tab]=await chrome.tabs.query({active:true,currentWindow:true});return tab}
-async function send(type){const tab=await activeTab();if(!tab?.id)throw Error('No active tab');return chrome.tabs.sendMessage(tab.id,{type})}
-async function slotState(){
-  const x=await chrome.storage.local.get(['draftSlot']);
-  if($('slot'))$('slot').textContent=x.draftSlot?`#${x.draftSlot}`:'—';
-  return x;
+async function send(type){
+  const tab=await activeTab();
+  if(!tab?.id||!/football\.fantasysports\.yahoo\.com/.test(tab.url||''))throw new Error('Open your Yahoo fantasy league in this tab first.');
+  return chrome.tabs.sendMessage(tab.id,{type});
 }
-async function refresh(){
-  const slot=await slotState();
+
+syncButton.addEventListener('click',async()=>{
+  syncButton.disabled=true;syncButton.textContent='SYNCING…';
+  setStatus('Syncing Yahoo league','Reading all fantasy teams and their current rosters. Keep this Yahoo tab open.');
   try{
-    const s=await send('STATUS');
-    $('count').textContent=s?.found||0;
-    $('status').textContent=s?.isDraftPage?`Yahoo draft detected${s?.draftSlot?` · slot #${s.draftSlot}`:''} · ${s?.found||0} drafted found.`:'Open the Yahoo draft room first.';
-  }catch(_){
-    const x=await chrome.storage.local.get(['foundCount','lastError']);
-    $('count').textContent=x.foundCount||0;
-    $('status').textContent=x.lastError?`Last error: ${x.lastError}`:`Open Yahoo draft room${slot.draftSlot?` · last slot #${slot.draftSlot}`:''}.`;
-  }
-}
-$('scan').onclick=async()=>{
+    const response=await send('SYNC_LEAGUE');
+    if(!response?.ok)throw new Error(response?.error||'Sync failed.');
+    const r=response.result;
+    showStats(r);
+    setStatus('Sync complete',`${r.teams} teams and ${r.players} roster spots saved. ${r.matched} players matched to the existing Fantasy Intel database.${r.unmatched?` ${r.unmatched} still need name matching.`:''}`,'success');
+  }catch(error){setStatus('Sync failed',error.message,'error')}
+  finally{syncButton.disabled=false;syncButton.textContent='SYNC ALL TEAMS'}
+});
+openButton.addEventListener('click',()=>chrome.tabs.create({url:SITE_URL}));
+
+(async()=>{
   try{
-    $('status').textContent='Scanning Yahoo draft…';
-    const r=await send('SCAN_NOW');
-    $('count').textContent=r?.found||0;
-    await slotState();
-    $('status').textContent=r?.ok?`Scan complete${r?.draftSlot?` · slot #${r.draftSlot}`:''} · ${r?.found||0} drafted found.`:'Scan failed.';
-  }catch(e){$('status').textContent=e.message}
-};
-$('open').onclick=()=>chrome.tabs.create({url:LIVE_URL});
-refresh();
+    const response=await send('LEAGUE_STATUS');
+    const r=response?.lastSync;
+    if(r){
+      showStats(r);
+      const when=r.syncedAt?new Date(r.syncedAt).toLocaleString():'';
+      setStatus('Last sync loaded',`${r.teams} teams · ${r.players} players${when?` · ${when}`:''}`,'success');
+    }
+  }catch(_e){}
+})();
