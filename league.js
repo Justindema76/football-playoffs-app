@@ -4,11 +4,12 @@
   const KEY='sb_publishable_L048cgw2gZwCeWmSWpUclA_cuKCSyQn';
   const H={apikey:KEY,Authorization:`Bearer ${KEY}`,'Content-Type':'application/json'};
   const LEAGUE_KEY='battle-of-the-kings-2026';
-  const MY_TEAM_KEY='6';
+  const MY_TEAM_KEY=new URLSearchParams(location.search).get('team')||'6';
   const state={teams:[],rosters:[],matchups:[],tags:new Map(),intel:new Map(),q:'',week:1};
   const $=id=>document.getElementById(id);
   const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const norm=v=>String(v||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+  const isMine=team=>String(team?.yahoo_team_key||'')===String(MY_TEAM_KEY);
 
   async function api(path){
     const r=await fetch(`${SB}/rest/v1/${path}`,{headers:H,cache:'no-store'});
@@ -108,7 +109,7 @@
     $('matchedCount').textContent=all.filter(x=>x.player_key).length;
     $('unmatchedCount').textContent=all.filter(x=>!x.player_key).length;
     const cards=[];
-    const ordered=[...state.teams].sort((a,b)=>(b.is_my_team-a.is_my_team)||Number(a.yahoo_team_key||99)-Number(b.yahoo_team_key||99));
+    const ordered=[...state.teams].sort((a,b)=>(Number(isMine(b))-Number(isMine(a)))||Number(a.yahoo_team_key||99)-Number(b.yahoo_team_key||99));
     for(const team of ordered){
       let rows=rosterFor(team).sort((a,b)=>slotWeight(a.roster_slot)-slotWeight(b.roster_slot)||String(a.yahoo_player_name).localeCompare(String(b.yahoo_player_name)));
       if(!teamMatches(team,rows))continue;
@@ -122,10 +123,11 @@
     const originalCount=rosterFor(team).length;
     const manager=team.manager_name?` · ${esc(team.manager_name)}`:'';
     const synced=team.last_synced_at?new Date(team.last_synced_at).toLocaleDateString():'';
-    return `<section class="team-card ${team.is_my_team?'my-team':''}">
+    const mine=isMine(team);
+    return `<section class="team-card ${mine?'my-team':''}">
       <header class="team-head">
         <div class="team-title"><h2>${esc(team.team_name)}</h2><p>Yahoo Team ${esc(team.yahoo_team_key||'—')}${manager}${synced?` · synced ${esc(synced)}`:''}</p></div>
-        <div class="team-badges">${team.is_my_team?'<span class="badge mine">YOUR TEAM</span>':''}<span class="team-count">${originalCount}</span></div>
+        <div class="team-badges">${mine?'<span class="badge mine">YOUR TEAM</span>':''}<span class="team-count">${originalCount}</span></div>
       </header>
       <div class="roster">${rows.map(playerRow).join('')||'<div class="empty">No roster synced yet.</div>'}</div>
     </section>`;
