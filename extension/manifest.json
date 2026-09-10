@@ -1,17 +1,20 @@
 {
   "manifest_version": 3,
   "name": "Fantasy Intel Yahoo League Sync",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Syncs Battle of the Kings Yahoo fantasy teams and rosters into Fantasy Intel.",
-  "permissions": ["storage", "activeTab"],
+  "permissions": ["storage", "activeTab", "tabs"],
   "host_permissions": [
     "https://football.fantasysports.yahoo.com/*",
     "https://bbodmhffnqebhfksjier.supabase.co/*"
   ],
+  "background": {
+    "service_worker": "background.js"
+  },
   "content_scripts": [
     {
       "matches": ["https://football.fantasysports.yahoo.com/*"],
-      "js": ["league-sync.js"],
+      "js": ["league-sync.js", "overlay.js"],
       "run_at": "document_idle"
     }
   ],
