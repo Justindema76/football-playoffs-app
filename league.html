@@ -14,7 +14,7 @@
         <a class="back" href="/">← MY TEAM</a>
         <p class="eyebrow">2026 FANTASY INTEL</p>
         <h1>Battle of the Kings</h1>
-        <p class="sub">Yahoo League 497223 · complete league ownership view</p>
+        <p class="sub">Yahoo League 497223 · ownership, rosters and full-season matchups</p>
       </div>
       <div class="top-actions">
         <button id="refreshButton" type="button">REFRESH</button>
@@ -27,15 +27,26 @@
       <div><b id="rosterCount">—</b><span>ROSTERED</span></div>
       <div><b id="matchedCount">—</b><span>MATCHED</span></div>
       <div><b id="unmatchedCount">—</b><span>UNMATCHED</span></div>
+      <div><b id="matchupCount">—</b><span>MATCHUPS</span></div>
     </section>
 
-    <section class="controls">
-      <input id="search" type="search" placeholder="Search team, player, NFL team, position..." autocomplete="off">
-      <div class="sync-read"><span id="syncDot"></span><b id="syncLabel">LOADING</b><small id="syncTime"></small></div>
+    <section class="schedule-panel">
+      <div class="section-head">
+        <div><p class="eyebrow">SEASON SCHEDULE</p><h2>Weekly Matchups</h2><p>Every league matchup synced from Yahoo. Select a week or show the full season.</p></div>
+        <div class="sync-read"><span id="syncDot"></span><b id="syncLabel">LOADING</b><small id="syncTime"></small></div>
+      </div>
+      <div id="weekPicker" class="week-picker"></div>
+      <div id="matchups" class="matchups"></div>
     </section>
 
-    <div id="notice" class="notice" hidden></div>
-    <main id="teams" class="team-grid" aria-live="polite"></main>
+    <section class="roster-panel">
+      <div class="section-head roster-title-row">
+        <div><p class="eyebrow">LEAGUE OWNERSHIP</p><h2>All Rosters</h2><p>All teams stay open. Search across every roster.</p></div>
+        <input id="search" type="search" placeholder="Search team, player, NFL team, position..." autocomplete="off">
+      </div>
+      <div id="notice" class="notice" hidden></div>
+      <main id="teams" class="team-grid" aria-live="polite"></main>
+    </section>
   </div>
   <script src="league.js" defer></script>
 </body>
