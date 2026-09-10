@@ -23,7 +23,7 @@
     return;
   }
 
-  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
   const normPos=v=>{const p=String(v||'').toUpperCase();return ['QB','RB','WR','TE','DEF','K'].includes(p)?p:'X'};
   const suggestionSort=(a,b)=>new Date(b.source_date||b.created_at||0)-new Date(a.source_date||a.created_at||0);
   const tagClass=t=>{
@@ -57,10 +57,10 @@
     const R=Object.fromEntries(rs.map(x=>[x.name,x]));
     state.intel=intelApi.sort(R.intel?.data||[]);
     state.suggestions=(R.suggestions?.data||[]).slice().sort(suggestionSort);
-    state.players=playersApi.build({catalog:R.catalog?.data||[],targets:R.targets?.data||[],planner:R.planner?.data||[],intel:state.intel,suggestions:state.suggestions,intelApi});
+    state.roster=R.roster?.data||[];
+    state.players=playersApi.build({catalog:R.catalog?.data||[],targets:R.targets?.data||[],planner:R.planner?.data||[],intel:state.intel,suggestions:state.suggestions,roster:state.roster,intelApi});
     state.weather=R.weather?.data||[];
     state.owner=R.owner?.data||[];
-    state.roster=R.roster?.data||[];
     state.errors=rs.filter(x=>x.error).map(x=>x.name);
     setSync(state.errors.length?(state.players.length?'partial':'error'):'live',state.errors.length?(state.players.length?'PARTIAL':'ERROR'):'LIVE');
     render();
@@ -153,17 +153,18 @@
 
   function renderPlayers(){
     const a=visiblePlayers();
-    $('pageMeta').textContent=`${a.length} current players`;
+    $('pageMeta').textContent=state.pos==='STARRED'?`${a.length} MY TEAM players`:`${a.length} current players`;
     $('content').innerHTML=`<div class="player-toolbar"><span class="source-badge">SEASON PLAYER MODEL · live intel + roster context</span></div><div class="list">${a.map(playerCard).join('')||'<div class="empty">No players match.</div>'}</div>`;
     bindTargets();
   }
 
   function playerCard(p){
     const po=normPos(p.position),ts=playersApi.allTags(p);
-    return `<article class="player-card ${p.user_target?'targeted':''}"><div class="card-top"><span class="pos ${po}">${po}</span><div style="display:flex;gap:7px;align-items:center"><span class="rank">${esc(p.team||'FA')}</span><button class="target-button ${p.user_target?'on':''}" data-key="${esc(p.player_key)}" data-target="${p.user_target?'false':'true'}">${p.user_target?'TARGETED':'TARGET'}</button></div></div><div class="player-name">${esc(p.yahoo_name||p.display_name)}</div>${ts.length?`<div class="tags">${ts.map(t=>`<span class="tag ${tagClass(t)}">${esc(t)}</span>`).join('')}</div>`:''}${renderPlayerContext(p)}</article>`;
+    const action=p.is_rostered?'<span class="target-button on">★ MY TEAM</span>':`<button class="target-button ${p.user_target?'on':''}" data-key="${esc(p.player_key)}" data-target="${p.user_target?'false':'true'}">${p.user_target?'TARGETED':'TARGET'}</button>`;
+    return `<article class="player-card ${p.is_rostered||p.user_target?'targeted':''}"><div class="card-top"><span class="pos ${po}">${po}</span><div style="display:flex;gap:7px;align-items:center"><span class="rank">${esc(p.team||'FA')}</span>${action}</div></div><div class="player-name">${esc(p.yahoo_name||p.display_name)}</div>${p.is_rostered?`<div class="player-meta">MY TEAM · ${esc(p.roster_slot||'ROSTER')} · ${esc(p.lineup_group||'')}</div>`:''}${ts.length?`<div class="tags">${ts.map(t=>`<span class="tag ${tagClass(t)}">${esc(t)}</span>`).join('')}</div>`:''}${renderPlayerContext(p)}</article>`;
   }
 
-  function bindTargets(){$('content').querySelectorAll('.target-button').forEach(b=>b.onclick=()=>toggleTarget(b.dataset.key,b.dataset.target==='true'))}
+  function bindTargets(){$('content').querySelectorAll('button.target-button').forEach(b=>b.onclick=()=>toggleTarget(b.dataset.key,b.dataset.target==='true'))}
 
   async function toggleTarget(key,target){
     const token=localStorage.getItem(APP_KEY);
@@ -192,7 +193,7 @@
   function saveKey(){const v=$('keyInput').value.trim();if(!/^\d{6}$/.test(v)){alert('Enter the 6-digit app key.');return}localStorage.setItem(APP_KEY,v);closeKey()}
 
   $('search').oninput=e=>{state.q=e.target.value.trim().toLowerCase();renderView()};
-  document.querySelectorAll('.bottom-nav button').forEach(b=>b.onclick=()=>{state.view=b.dataset.view;state.pos='ALL';render();scrollTo({top:0,behavior:'smooth'});history.replaceState(null,'',`#${state.view}`)});
+  document.querySelectorAll('.bottom-nav button').forEach(b=>b.onclick=()=>{state.view=b.dataset.view;state.pos=state.view==='intel'?'STARRED':'ALL';render();scrollTo({top:0,behavior:'smooth'});history.replaceState(null,'',`#${state.view}`)});
   $('keyButton').onclick=openKey;
   $('saveKey').onclick=saveKey;
   document.querySelectorAll('[data-close-key]').forEach(x=>x.onclick=closeKey);
@@ -200,6 +201,7 @@
 
   const requested=(location.hash||'#team').slice(1).toLowerCase();
   if(['team','intel','players','runningbacks','widereceivers','injuries','weather'].includes(requested))state.view=requested;
+  if(state.view==='intel')state.pos='STARRED';
   load();
   setInterval(load,60000);
 })();
