@@ -90,19 +90,27 @@
   }
 
   function render({state,$,esc,normPos,tagClass,matches}){
+    const teamFeed=String(state.pos||'').toUpperCase()==='STARRED';
     const players=state.players
-      .filter(player=>(player.intel_items||[]).length&&matches(player))
+      .filter(player=>teamFeed?matches(player):((player.intel_items||[]).length&&matches(player)))
       .sort((a,b)=>{
+        if(teamFeed){
+          const ao=Number.isFinite(Number(a.roster_display_order))?Number(a.roster_display_order):999;
+          const bo=Number.isFinite(Number(b.roster_display_order))?Number(b.roster_display_order):999;
+          if(ao!==bo)return ao-bo;
+        }
         const at=latest(a.intel_items)?.updated_at||latest(a.intel_items)?.last_checked_at||0;
         const bt=latest(b.intel_items)?.updated_at||latest(b.intel_items)?.last_checked_at||0;
         return new Date(bt)-new Date(at);
       });
     const itemCount=players.reduce((count,player)=>count+(player.intel_items||[]).length,0);
-    $('pageMeta').textContent=`${players.length} players · ${itemCount} current Intel items · newest update first`;
+    $('pageMeta').textContent=teamFeed?`${players.length} MY TEAM players · ${itemCount} current Intel items`:`${players.length} players · ${itemCount} current Intel items · newest update first`;
     $('content').innerHTML=`<div class="list">${players.map(player=>{
       const items=sort(player.intel_items||[]);
       const newest=items[0]||{};
-      return `<article class="intel-card ${player.user_target?'targeted':''}"><div class="card-top"><span class="pos ${normPos(player.position)}">${normPos(player.position)}</span><div style="display:flex;gap:7px;align-items:center"><span class="tier-badge">TIER ${esc(player.tier??'—')}</span><span class="rank">Yahoo #${esc(player.yahoo_rank??'—')}</span><span class="tag ${tagClass(newest.action)}">${esc(newest.action||'INTEL')}</span></div></div><div class="player-name">${esc(player.yahoo_name||player.display_name)}</div><div class="player-team-line"><span class="team-badge">${esc(player.team||'FA')}</span><span class="player-meta">${esc(newest.priority||'')}${newest.last_checked_at?` · Checked ${esc(new Date(newest.last_checked_at).toLocaleString())}`:''}</span></div>${isInjuryPlayer(player)?'<div class="tags"><span class="tag injury">INJURY</span></div>':''}${items.map(item=>`<div class="detail-item"><p>${esc(item.what_changed||'')}</p>${item.recommendation?`<p><b>WHAT TO DO:</b> ${esc(item.recommendation)}</p>`:''}${item.draft_tags?.length?`<div class="tags">${item.draft_tags.map(tag=>`<span class="tag ${tagClass(tag)}">${esc(tag)}</span>`).join('')}</div>`:''}${sourceHtml(item.source_note,esc)}${checkedHtml(item,esc)}</div>`).join('')}</article>`;
+      const action=newest.action||(teamFeed?'MY TEAM':'INTEL');
+      const fallback=player.planner_reason||'No material Intel change is currently logged for this player.';
+      return `<article class="intel-card ${player.is_rostered?'targeted':''}"><div class="card-top"><span class="pos ${normPos(player.position)}">${normPos(player.position)}</span><div style="display:flex;gap:7px;align-items:center">${player.roster_slot?`<span class="tier-badge">${esc(player.roster_slot)}</span>`:(player.tier?`<span class="tier-badge">TIER ${esc(player.tier)}</span>`:'')}${player.yahoo_rank?`<span class="rank">Yahoo #${esc(player.yahoo_rank)}</span>`:''}<span class="tag ${tagClass(action)}">${esc(action)}</span></div></div><div class="player-name">${esc(player.yahoo_name||player.display_name)}</div><div class="player-team-line"><span class="team-badge">${esc(player.team||'FA')}</span><span class="player-meta">${esc(newest.priority||'')}${newest.last_checked_at?` · Checked ${esc(new Date(newest.last_checked_at).toLocaleString())}`:''}</span></div>${isInjuryPlayer(player)?'<div class="tags"><span class="tag injury">INJURY</span></div>':''}${items.length?items.map(item=>`<div class="detail-item"><p>${esc(item.what_changed||'')}</p>${item.recommendation?`<p><b>WHAT TO DO:</b> ${esc(item.recommendation)}</p>`:''}${item.draft_tags?.length?`<div class="tags">${item.draft_tags.map(tag=>`<span class="tag ${tagClass(tag)}">${esc(tag)}</span>`).join('')}</div>`:''}${sourceHtml(item.source_note,esc)}${checkedHtml(item,esc)}</div>`).join(''):`<div class="detail-item"><p>${esc(fallback)}</p></div>`}</article>`;
     }).join('')||'<div class="empty">No current intel matches.</div>'}</div>`;
   }
 
