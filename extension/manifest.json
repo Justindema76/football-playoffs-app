@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Fantasy Intel Yahoo League Sync",
-  "version": "2.1.0",
-  "description": "Syncs Battle of the Kings Yahoo fantasy teams and rosters into Fantasy Intel.",
+  "version": "2.4.0",
+  "description": "Syncs all Yahoo league rosters plus the full 18-week Battle of the Kings matchup schedule into Fantasy Intel.",
   "permissions": ["storage", "activeTab", "tabs"],
   "host_permissions": [
     "https://football.fantasysports.yahoo.com/*",
