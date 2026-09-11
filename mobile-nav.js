@@ -36,6 +36,9 @@
     return true;
   }
   function build(){
+    const leagueButton=document.querySelector('[data-league-link]');
+    if(leagueButton)leagueButton.onclick=()=>{location.href='league.html';};
+
     const toggle=document.createElement('button');
     toggle.id='mobileMenuToggle';toggle.className='mobile-menu-toggle';toggle.type='button';
     toggle.setAttribute('aria-label','Open navigation menu');toggle.setAttribute('aria-expanded','false');toggle.innerHTML='<span></span>';
