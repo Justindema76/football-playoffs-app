@@ -3,10 +3,9 @@
 
   const APP_VIEWS = [
     ['team','MY TEAM'],
+    ['matchup','MATCHUP'],
     ['intel','INTEL'],
     ['players','PLAYERS'],
-    ['runningbacks','RUNNING BACKS'],
-    ['widereceivers','WIDE RECEIVERS'],
     ['injuries','INJURIES'],
     ['weather','WEATHER'],
     ['league','LEAGUE']
