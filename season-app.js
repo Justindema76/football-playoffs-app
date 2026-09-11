@@ -8,7 +8,7 @@
   const LEAGUE_KEY='battle-of-the-kings-2026';
   const MY_TEAM_KEY=new URLSearchParams(location.search).get('team')||'6';
   const REQUESTED_WEEK=Number(new URLSearchParams(location.search).get('week'));
-  const VIEWS=['team','matchup','intel','players','injuries','weather','league'];
+  const VIEWS=['team','matchup','all-matchups','intel','players','injuries','weather','league'];
   const FILTERS=['ALL','QB','RB','WR','TE','DEF','K','STARRED','INTEL','INJURY'];
   const FILTER_VIEWS=new Set(['players','intel','injuries']);
 
@@ -288,10 +288,35 @@
     $('content').querySelectorAll('[data-review-week]').forEach(btn=>btn.onclick=()=>setWeek(btn.dataset.reviewWeek));
   }
 
+  function matchupToolbar(mode='matchup'){
+    const options=Array.from({length:18},(_,i)=>`<option value="${i+1}" ${state.week===i+1?'selected':''}>Week ${i+1}</option>`).join('');
+    const action=mode==='matchup'
+      ?'<button class="all-matchups-button" type="button" data-all-matchups>ALL MATCHUPS</button>'
+      :'<button class="all-matchups-button" type="button" data-my-matchup>MY MATCHUP</button>';
+    return `<div class="matchup-toolbar"><div class="matchup-week-controls"><button type="button" data-week-prev aria-label="Previous week">‹</button><select data-week-select aria-label="Select week">${options}</select><button type="button" data-week-next aria-label="Next week">›</button></div>${action}</div>`;
+  }
+
+  function bindMatchupToolbar(){
+    const root=$('content');
+    const go=week=>setWeek(Math.max(1,Math.min(18,Number(week)||1)));
+    root.querySelector('[data-week-prev]')?.addEventListener('click',()=>go(state.week-1));
+    root.querySelector('[data-week-next]')?.addEventListener('click',()=>go(state.week+1));
+    root.querySelector('[data-week-select]')?.addEventListener('change',e=>go(e.target.value));
+    root.querySelector('[data-all-matchups]')?.addEventListener('click',()=>setView('all-matchups'));
+    root.querySelector('[data-my-matchup]')?.addEventListener('click',()=>setView('matchup'));
+    root.querySelectorAll('[data-roster-toggle]').forEach(button=>button.addEventListener('click',()=>{
+      const panel=document.getElementById(button.dataset.rosterToggle);
+      if(!panel)return;
+      panel.hidden=!panel.hidden;
+      button.textContent=panel.hidden?'PLAYERS ▼':'PLAYERS ▲';
+    }));
+  }
+
   function render(){
     $('shell').dataset.view=state.view;
-    document.querySelectorAll('.bottom-nav button[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===state.view));
-    const titles={team:'MY TEAM',matchup:'MATCHUP',intel:'INTEL',players:'PLAYERS',injuries:'INJURIES',weather:'WEATHER',league:'LEAGUE'};
+    const navView=state.view==='all-matchups'?'matchup':state.view;
+    document.querySelectorAll('.bottom-nav button[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===navView));
+    const titles={team:'MY TEAM',matchup:'MATCHUP','all-matchups':'ALL MATCHUPS',intel:'INTEL',players:'PLAYERS',injuries:'INJURIES',weather:'WEATHER',league:'LEAGUE'};
     $('pageTitle').textContent=titles[state.view]||state.view.toUpperCase();
     $('rosterCount').textContent=state.roster.length;
     $('starterCount').textContent=state.roster.filter(x=>x.lineup_group==='STARTER').length;
@@ -303,7 +328,7 @@
   }
 
   function renderFilters(){
-    const a=['team','matchup','weather','league'].includes(state.view)?[]:(FILTER_VIEWS.has(state.view)?FILTERS:['ALL']);
+    const a=['team','matchup','all-matchups','weather','league'].includes(state.view)?[]:(FILTER_VIEWS.has(state.view)?FILTERS:['ALL']);
     $('positionFilters').innerHTML=a.map(p=>`<button class="${state.pos===p?'active':''}" data-pos="${p}">${p}</button>`).join('');
     $('positionFilters').querySelectorAll('button').forEach(b=>b.onclick=()=>{
       state.pos=b.dataset.pos;
@@ -326,6 +351,7 @@
   function renderView(){
     if(state.view==='team')return renderTeam();
     if(state.view==='matchup')return renderMatchup();
+    if(state.view==='all-matchups')return renderAllMatchups();
     if(state.view==='players')return renderPlayers();
     if(state.view==='intel')return intelApi.render({state,$,esc,normPos,tagClass,matches});
     if(state.view==='weather')return renderWeather();
@@ -384,18 +410,55 @@
     return team?teamWeekRows(team.id,week).filter(x=>x.lineup_group==='STARTER').sort((a,b)=>(a.display_order-b.display_order)||slotWeight(a.roster_slot)-slotWeight(b.roster_slot)):[];
   }
 
-  function matchupPlayer(row){
-    if(!row)return '<div class="matchup-player empty-side">—</div>';
-    const p=rosterPlayer(row);
-    const w=row._weekly||weeklyFor(p,state.week)||weeklyForRow(row,state.week);
-    const action=intelApi.latest(p?.intel_items||[])?.action;
-    return `<div class="matchup-player"><b>${esc(row.player_name)}</b><small>${esc(row.team||'—')} · ${esc(w?.opponent||'')}</small><div><strong>${fmt(w?.fantasy_points)}</strong><span>Proj ${fmt(w?.projected_points)}</span></div>${action?`<span class="tag ${tagClass(action)}">${esc(action)}</span>`:''}</div>`;
-  }
-
   function rowProjection(row){
     const p=rosterPlayer(row);
     const w=row?._weekly||weeklyFor(p,state.week)||weeklyForRow(row,state.week);
     return num(w?.projected_points);
+  }
+
+  function shortName(name){
+    const parts=String(name||'').trim().split(/\s+/).filter(Boolean);
+    if(parts.length<2)return upper(name||'—');
+    return `${parts[0][0]}. ${parts.slice(1).join(' ')}`.toUpperCase();
+  }
+
+  function matchupPosition(row){
+    const slot=upper(row?.roster_slot||row?.position||'');
+    if(['W/R/T','W/R','Q/W/R/T'].includes(slot))return 'WRT';
+    if(slot==='DST')return 'DEF';
+    return slot||'—';
+  }
+
+  function matchupInfo(row,side){
+    if(!row)return `<div class="matchup-player-info ${side}"><div class="matchup-player-name">—</div></div>`;
+    const p=rosterPlayer(row);
+    const w=row._weekly||weeklyFor(p,state.week)||weeklyForRow(row,state.week);
+    const latest=intelApi.latest(p?.intel_items||[]);
+    const meta=[row.team||'—',w?.game_time,w?.opponent].filter(Boolean).join(' · ');
+    return `<div class="matchup-player-info ${side}"><div class="matchup-player-name">${esc(shortName(row.player_name))}</div><div class="matchup-player-meta">${esc(meta)}</div>${latest?.action?`<span class="matchup-player-intel ${tagClass(latest.action)}">${esc(upper(latest.action))}</span>`:''}</div>`;
+  }
+
+  function matchupPoints(row){
+    if(!row)return '<div class="matchup-player-points"><b>—</b><span>—</span></div>';
+    const p=rosterPlayer(row);
+    const w=row._weekly||weeklyFor(p,state.week)||weeklyForRow(row,state.week);
+    return `<div class="matchup-player-points"><b>${fmt(w?.fantasy_points)}</b><span>${fmt(w?.projected_points)}</span></div>`;
+  }
+
+  function matchupRows(mine,theirs){
+    const count=Math.max(mine.length,theirs.length);
+    if(!count)return '<div class="empty">No player-level weekly lineup has been synced for this matchup.</div>';
+    return Array.from({length:count},(_,i)=>{
+      const left=mine[i]||null,right=theirs[i]||null,pos=matchupPosition(left||right),cls=pos.toLowerCase().replace(/[^a-z]/g,'');
+      return `<div class="matchup-player-row">${matchupInfo(left,'left')}${matchupPoints(left)}<div class="matchup-position ${cls}">${esc(pos)}</div>${matchupPoints(right)}${matchupInfo(right,'right')}</div>`;
+    }).join('');
+  }
+
+  function matchupScoreHero(my,opp,myPts,myProj,oppPts,oppProj){
+    const total=(num(myProj)||0)+(num(oppProj)||0);
+    const pct=num(myProj)!==null&&num(oppProj)!==null&&total?Math.round(Number(myProj)/total*100):50;
+    const hasPct=num(myProj)!==null&&num(oppProj)!==null;
+    return `<div class="matchup-score-card"><div class="score-teams"><div class="score-team"><small>YOUR TEAM</small><b>${esc(my?.team_name||'House of the Dragon')}</b><strong>${fmt(myPts)}</strong><span>${fmt(myProj)} projected</span></div><div class="score-vs">VS</div><div class="score-team right"><small>OPPONENT</small><b>${esc(opp?.team_name||'Opponent')}</b><strong>${fmt(oppPts)}</strong><span>${fmt(oppProj)} projected</span></div></div><div class="win-meter"><b>${hasPct?`${pct}%`:'—'}</b><div class="win-track"><div class="win-fill" style="width:${pct}%"></div></div><b>${hasPct?`${100-pct}%`:'—'}</b></div></div>`;
   }
 
   function compatibleForSlot(candidate,starter){
@@ -552,8 +615,8 @@
     $('pageMeta').textContent=`Week ${state.week} · Yahoo matchup + weekly advice`;
 
     if(!m){
-      $('content').innerHTML=`${weekToolbar()}<div class="empty">No matchup is saved for your team in Week ${state.week} yet.</div>`;
-      bindWeekButtons();
+      $('content').innerHTML=`${matchupToolbar('matchup')}<div class="empty">No matchup is saved for your team in Week ${state.week} yet.</div>`;
+      bindMatchupToolbar();
       return;
     }
 
@@ -564,16 +627,52 @@
     const opp=teamByYahooKey(oppKey);
     const mine=starterRowsFor(my,state.week);
     const theirs=starterRowsFor(opp,state.week);
-    const count=Math.max(mine.length,theirs.length);
     const myPts=mineA?m.team_a_points:m.team_b_points;
     const myProj=mineA?m.team_a_projected:m.team_b_projected;
     const oppPts=mineA?m.team_b_points:m.team_a_points;
     const oppProj=mineA?m.team_b_projected:m.team_a_projected;
-    const rows=Array.from({length:count},(_,i)=>`<div class="matchup-line">${matchupPlayer(mine[i])}<div class="matchup-slot">${esc(mine[i]?.roster_slot||theirs[i]?.roster_slot||mine[i]?.position||theirs[i]?.position||'')}</div>${matchupPlayer(theirs[i])}</div>`).join('');
+    const rows=matchupRows(mine,theirs);
     const advice=buildMatchupAdvice(my,opp,mine,theirs,myProj,oppProj);
+    const opponentBench=opp?teamWeekRows(opp.id,state.week).filter(x=>x.lineup_group==='BENCH'):[];
 
-    $('content').innerHTML=`${weekToolbar()}<section class="matchup-advice"><div class="matchup-advice-head"><div><small>WEEK ${state.week}</small><b>YOUR GAME PLAN</b></div><span>Yahoo projections + roster + waivers + Intel + weather</span></div><div class="advice-grid">${advice}</div></section><section class="matchup-panel"><div class="matchup-head"><div><small>YOUR TEAM</small><b>${esc(my?.team_name||'House of the Dragon')}</b><strong>${fmt(myPts)}</strong><span>Proj ${fmt(myProj)}</span></div><em>VS</em><div><small>OPPONENT</small><b>${esc(opp?.team_name||'Opponent')}</b><strong>${fmt(oppPts)}</strong><span>Proj ${fmt(oppProj)}</span></div></div><div class="matchup-lines">${rows||'<div class="empty">No player-level weekly lineup has been synced for this matchup.</div>'}</div></section>`;
-    bindWeekButtons();
+    $('content').innerHTML=`${matchupToolbar('matchup')}<section class="matchup-panel-old">${matchupScoreHero(my,opp,myPts,myProj,oppPts,oppProj)}<div class="matchup-list">${rows}</div>${opponentBench.length?`<details class="matchup-bench"><summary>SHOW ${esc(upper(opp?.team_name||'OPPONENT'))} BENCH ▼</summary><div class="matchup-bench-list">${opponentBench.map(inlineMatchupRosterPlayer).join('')}</div></details>`:''}</section><section class="matchup-advice"><div class="matchup-advice-head"><div><small>WEEK ${state.week}</small><b>YOUR GAME PLAN</b></div><span>Yahoo projections + roster + waivers + Intel + weather</span></div><div class="advice-grid">${advice}</div></section>`;
+    bindMatchupToolbar();
+  }
+
+  function matchupActualProjected(m,team,side){
+    if(side==='a')return {points:m.team_a_points,projected:m.team_a_projected};
+    if(side==='b')return {points:m.team_b_points,projected:m.team_b_projected};
+    if(team?.id===m.team_a_id)return {points:m.team_a_points,projected:m.team_a_projected};
+    return {points:m.team_b_points,projected:m.team_b_projected};
+  }
+
+  function inlineMatchupRosterPlayer(row){
+    const p=rosterPlayer(row);
+    const w=row._weekly||weeklyFor(p,state.week)||weeklyForRow(row,state.week);
+    const latest=intelApi.latest(p?.intel_items||[]);
+    return `<div class="all-matchup-player-row"><span class="all-matchup-slot">${esc(row.roster_slot||row.position||'—')}</span><div><b>${esc(row.player_name)}</b><small>${esc(row.position||'—')} · ${esc(row.team||'—')}</small>${latest?.action?`<span class="matchup-player-intel ${tagClass(latest.action)}">${esc(upper(latest.action))}</span>`:''}</div><div class="all-matchup-player-score"><strong>${fmt(w?.fantasy_points)}</strong><span>Proj ${fmt(w?.projected_points)}</span></div></div>`;
+  }
+
+  function allMatchupTeamPanel(team,m,side,index){
+    const score=matchupActualProjected(m,team,side);
+    const rows=team?teamWeekRows(team.id,state.week):[];
+    const id=`all-roster-${state.week}-${index}-${side}`;
+    const mine=String(team?.yahoo_team_key||'')===String(MY_TEAM_KEY);
+    return `<div class="all-matchup-team"><div class="all-matchup-team-head"><div><b>${esc(team?.team_name||'Team')}${mine?' · YOU':''}</b><small>${esc(team?.manager_name||'')}</small><button type="button" class="roster-toggle" data-roster-toggle="${id}">PLAYERS ▼</button></div><div class="all-matchup-team-score"><strong>${fmt(score.points)}</strong><span>${fmt(score.projected)} proj</span></div></div><div id="${id}" class="inline-roster" hidden>${rows.map(inlineMatchupRosterPlayer).join('')||'<div class="empty">No players synced.</div>'}</div></div>`;
+  }
+
+  function allMatchupCard(m,index){
+    const a=state.leagueTeams.find(t=>t.id===m.team_a_id)||teamByYahooKey(m.team_a_yahoo_key);
+    const b=state.leagueTeams.find(t=>t.id===m.team_b_id)||teamByYahooKey(m.team_b_yahoo_key);
+    const mine=String(m.team_a_yahoo_key)===String(MY_TEAM_KEY)||String(m.team_b_yahoo_key)===String(MY_TEAM_KEY);
+    return `<article class="all-matchup-card ${mine?'mine':''}">${allMatchupTeamPanel(a,m,'a',index)}${allMatchupTeamPanel(b,m,'b',index)}</article>`;
+  }
+
+  function renderAllMatchups(){
+    const rows=(state.leagueMatchups||[]).filter(m=>Number(m.week)===Number(state.week));
+    $('pageMeta').textContent=`Week ${state.week} · ${rows.length} league matchups`;
+    $('content').innerHTML=`${matchupToolbar('all-matchups')}<section class="all-matchups-wrap"><div class="all-matchups-list">${rows.map(allMatchupCard).join('')||'<div class="empty">No league matchups are synced for this week.</div>'}</div></section>`;
+    bindMatchupToolbar();
   }
 
   function playerSort(a,b){
