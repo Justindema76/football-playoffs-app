@@ -29,15 +29,18 @@
 
   function mergeCatalogWithRoster(catalog,roster){
     const merged=[...(catalog||[])];
+    const existingYahoo=new Set(merged.map(x=>String(x.yahoo_player_key||'')).filter(Boolean));
     const existingKeys=new Set(merged.map(x=>normKey(x.player_key||x.yahoo_name||x.display_name)));
     const existingNames=new Set(merged.map(x=>normName(x.yahoo_name||x.display_name)));
 
     for(const row of roster||[]){
+      const yahoo=String(row.yahoo_player_key||'');
       const key=normKey(row.player_key||row.player_name);
       const name=normName(row.player_name);
-      if((key&&existingKeys.has(key))||(name&&existingNames.has(name)))continue;
+      if((yahoo&&existingYahoo.has(yahoo))||(key&&existingKeys.has(key))||(name&&existingNames.has(name)))continue;
       merged.push({
         player_key:row.player_key||row.player_name,
+        yahoo_player_key:row.yahoo_player_key||null,
         yahoo_name:row.player_name,
         display_name:row.player_name,
         team:row.team||null,
@@ -47,6 +50,7 @@
         source:'current_fantasy_roster',
         active:true
       });
+      if(yahoo)existingYahoo.add(yahoo);
       if(key)existingKeys.add(key);
       if(name)existingNames.add(name);
     }
@@ -57,6 +61,7 @@
     const targetMap=new Map(targets.map(x=>[normKey(x.player_key),x]));
     const plannerByKey=new Map(planner.map(x=>[normKey(x.player_key),x]));
     const plannerByName=new Map(planner.map(x=>[normName(x.player_name),x]));
+    const rosterByYahoo=new Map(roster.filter(x=>x.yahoo_player_key).map(x=>[String(x.yahoo_player_key),x]));
     const rosterByKey=new Map(roster.map(x=>[normKey(x.player_key||x.player_name),x]));
     const rosterByName=new Map(roster.map(x=>[normName(x.player_name),x]));
     const intelByName=intelApi.groupByName(intel,normName);
@@ -64,11 +69,12 @@
     const sourceRows=mergeCatalogWithRoster(catalog,roster);
 
     return sourceRows.map(raw=>{
+      const yahoo=String(raw.yahoo_player_key||'');
       const key=normKey(raw.player_key);
       const name=normName(raw.yahoo_name||raw.display_name);
       const target=targetMap.get(key)||{};
       const plan=plannerByKey.get(key)||plannerByName.get(name)||{};
-      const rosterRow=rosterByKey.get(key)||rosterByName.get(name)||null;
+      const rosterRow=rosterByYahoo.get(yahoo)||rosterByKey.get(key)||rosterByName.get(name)||null;
       const playerIntel=intelByName.get(name)||[];
       const playerSuggestions=(suggestionsByKey.get(key)||suggestionsByKey.get(name)||[]).slice();
       return Object.freeze({
@@ -104,25 +110,18 @@
     const q=String(state?.q||'').trim().toLowerCase();
     if(!q)return true;
     const research=(player.suggestions||[]).some(s=>[s.suggestion_type,s.sentiment,s.note,s.source_context,s.source_name,s.suggested_round].join(' ').toLowerCase().includes(q));
-    const core=[player.yahoo_name,player.display_name,player.team,player.position,player.roster_slot,player.lineup_group,player.planner_reason,player.yahoo_rank,player.tier,player.source,...allTags(player)].join(' ').toLowerCase().includes(q);
+    const core=[player.yahoo_name,player.display_name,player.team,player.position,player.roster_slot,player.lineup_group,player.planner_reason,player.yahoo_rank,player.tier,player.source,player.availability_status,player.owning_team_name,...allTags(player)].join(' ').toLowerCase().includes(q);
     return core||intelApi.matchesSearch(player.intel_items||[],q)||research;
   }
 
   function byPosition(players,position){return (players||[]).filter(player=>String(player.position||'').toUpperCase()===String(position||'').toUpperCase())}
-
   function teams(players){return [...new Set((players||[]).map(player=>String(player.team||'FA').toUpperCase()))].sort()}
-
   function groupByTeam(players){
     const groups=new Map();
-    (players||[]).forEach(player=>{
-      const team=String(player.team||'FA').toUpperCase();
-      if(!groups.has(team))groups.set(team,[]);
-      groups.get(team).push(player);
-    });
+    (players||[]).forEach(player=>{const team=String(player.team||'FA').toUpperCase();if(!groups.has(team))groups.set(team,[]);groups.get(team).push(player)});
     for(const group of groups.values())group.sort(sortYahoo);
     return groups;
   }
-
   function catalogGaps(players){
     const ranks=new Set((players||[]).map(p=>Number(p.yahoo_rank)).filter(n=>Number.isInteger(n)&&n>0));
     const maxRank=Math.max(0,...ranks),gaps=[];
