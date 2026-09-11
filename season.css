@@ -19,5 +19,5 @@
 html.light .roster-section,html.light .roster-card,html.light .roster-overview>div{background:#fff;border-color:#94a3b8;color:#0f172a}
 html.light .roster-section-head{background:#dbe7f5;border-color:#94a3b8;color:#0f172a}
 html.light .roster-slot{background:#eef3f8;border-color:#94a3b8;color:#0f172a}
-html.light .roster-read{color:#334155}.bottom-nav{grid-template-columns:repeat(7,1fr)}
+html.light .roster-read{color:#334155}.bottom-nav{grid-template-columns:repeat(8,1fr)}
 @media(max-width:760px){.roster-grid{grid-template-columns:1fr}.roster-card:nth-child(odd){border-right:0}.roster-card{border-bottom:1px solid var(--line)!important}.roster-card:last-child{border-bottom:0!important}.roster-overview{grid-template-columns:repeat(2,minmax(0,1fr))}.roster-name{font-size:18px}.roster-card{grid-template-columns:52px minmax(0,1fr);padding:13px 12px}}
