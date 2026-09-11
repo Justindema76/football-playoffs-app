@@ -8,7 +8,8 @@
     ['runningbacks','RUNNING BACKS'],
     ['widereceivers','WIDE RECEIVERS'],
     ['injuries','INJURIES'],
-    ['weather','WEATHER']
+    ['weather','WEATHER'],
+    ['league','LEAGUE']
   ];
 
   const path = location.pathname.toLowerCase();
@@ -32,20 +33,16 @@
     const target=document.querySelector(`.bottom-nav button[data-view="${view}"]`);
     if(!target)return false;
     target.click();
-    history.replaceState(null,'',`#${view}`);
     return true;
   }
   function build(){
-    const leagueButton=document.querySelector('[data-league-link]');
-    if(leagueButton)leagueButton.onclick=()=>{location.href='league.html';};
-
     const toggle=document.createElement('button');
     toggle.id='mobileMenuToggle';toggle.className='mobile-menu-toggle';toggle.type='button';
     toggle.setAttribute('aria-label','Open navigation menu');toggle.setAttribute('aria-expanded','false');toggle.innerHTML='<span></span>';
     const shade=document.createElement('div');shade.id='mobileMenuShade';shade.className='mobile-menu-shade';
     const panel=document.createElement('nav');panel.id='mobileMenuPanel';panel.className='mobile-menu-panel';panel.setAttribute('aria-label','Mobile navigation');
     const activeHash=(location.hash||'#team').slice(1).toLowerCase();
-    panel.innerHTML=`<div class="mobile-menu-title"><b>2026 FANTASY</b><span>In-season command center</span></div>${APP_VIEWS.map(([view,label])=>`<a href="${appHref(view)}" data-mobile-view="${view}" class="${onIndex&&activeHash===view?'active':''}">${label}</a>`).join('')}<a href="league.html">LEAGUE</a>`;
+    panel.innerHTML=`<div class="mobile-menu-title"><b>2026 FANTASY</b><span>In-season command center</span></div>${APP_VIEWS.map(([view,label])=>`<a href="${appHref(view)}" data-mobile-view="${view}" class="${onIndex&&activeHash===view?'active':''}">${label}</a>`).join('')}`;
     document.body.append(shade,panel,toggle);
     toggle.addEventListener('click',()=>toggle.classList.contains('open')?closeMenu():openMenu());
     shade.addEventListener('click',closeMenu);
