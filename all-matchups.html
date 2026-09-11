@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>All Matchups · Fantasy Intel</title>
+  <script>
+    const params=new URLSearchParams(location.search);
+    const week=params.get('week')||'1';
+    const team=params.get('team')||'6';
+    location.replace(`./index.html?week=${encodeURIComponent(week)}&team=${encodeURIComponent(team)}#all-matchups`);
+  </script>
+</head>
+<body></body>
+</html>
